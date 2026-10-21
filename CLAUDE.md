@@ -30,14 +30,16 @@ Pantry Chef: a self-hosted PWA that suggests recipes from our pantry while respe
 - Timestamps: use `models.utcnow()` (aware UTC); SQLModel rejects naive datetimes.
 - Generation: `cook.generate()` loads `never` rules from the DB (never from the form); `cook.review_batch()` runs `cook.review()` on every recipe before tidying it, regenerates once, then drops. Spin-offs (`saved.spin_off()`) go through the same `review_batch()` with everyone's rules.
 - The `suggestion` table holds the latest batch only: one Cook batch (`parent_recipe_id` NULL) plus one spin-off batch per saved recipe. Saving and rating copy from it by id (never recipe JSON from the form); `saved_recipe_id` marks which saved recipe a card became. Rating an unsaved card saves it.
+- Plan: `plan_item` always holds its own copy of the recipe JSON (copied server-side from a suggestion or saved recipe by id), plus `saved_recipe_id` when saved; deleting that saved recipe cascades it off the plan. "Already planned" = equal recipe JSON.
+- Shopping list (`shopping.py`): unchecked `plan` rows are owned by `shopping.sync()` (run after plan changes and on every `/list` load); it merges by `normalize_name` and skips Have, Buying and enabled staples. It never touches `manual` or checked rows. Buying items are shown on the List straight from `pantry_item`, not copied. Checking moves the item into Have and records `pantry_item_id` so unchecking undoes exactly that; a checked Buying item becomes a `buying` row so undo puts it back in Buying.
 - LLM calls go through `llm.request_recipes()` (structured output via `output_config.format`, one validation retry, every call logged). Tests use the `fake_llm` fixture; an autouse fixture makes un-faked calls fail.
 
 ## Layout (target)
 ```
 app/
-  main.py          # FastAPI app: wires routers, simple pages, /health, /sw.js
+  main.py          # FastAPI app: wires routers, /health, /sw.js
   web.py           # templates, tab bar, render/render_partial, is_htmx, redirect
-  routers/         # one APIRouter per page (cook.py, pantry.py, saved.py, settings.py, ...)
+  routers/         # one APIRouter per page (cook.py, pantry.py, saved.py, settings.py, shopping.py)
   cook.py          # Cook tab: form parsing, prompt context, review/filter, regenerate-once
   saved.py         # save/rate cards, Saved list/search, heads-up for new never rules, spin-offs
   pantry.py        # name cleaning, plural-folding normalize_name, bulk add
@@ -46,7 +48,7 @@ app/
   schemas.py       # Pydantic LLM schemas
   llm.py           # Anthropic client, prompt building, structured output, retries
   restrictions.py  # never-filter matcher
-  shopping.py      # shopping list aggregation
+  shopping.py      # this week's plan, shopping list sync, check/uncheck into the pantry
   prompts/         # prompt templates
   templates/       # Jinja2 + HTMX
   static/          # css, icons, manifest, service worker

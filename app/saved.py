@@ -132,8 +132,10 @@ def warnings(session: Session, recipes: list[SavedRecipe]) -> dict[int, list[Hea
 
     Saved recipes passed the filter when they were generated, but a rule
     added later (or a level raised to never) can catch an old recipe. This
-    is display only: a heads-up on the Saved tab. Returns {recipe id: one
-    HeadsUp per restriction hit}, with only the recipes that have a hit.
+    is display only: a heads-up on the Saved tab (and for planned recipes on
+    the List tab: `recipes` can be anything with .id and .recipe_json).
+    Returns {id: one HeadsUp per restriction hit}, with only the recipes
+    that have a hit.
     """
     people = {p.id: p.name for p in session.exec(select(Person))}
     rules = never_restrictions_for(session, people.keys())

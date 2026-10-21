@@ -468,7 +468,7 @@ button[disabled] { opacity: 0.6; cursor: progress; }
 .saved-link { color: var(--accent); font-weight: 600; }
 
 .rating { display: flex; gap: 8px; }
-.saved-recipe > .rating { margin: 10px 0 4px; }
+.saved-recipe > .card-actions { margin: 10px 0 4px; }
 button.thumb { width: var(--tap); padding: 0; font-size: 1.25rem; }
 /* Not chosen: faded. Chosen: highlighted. */
 button.thumb[aria-pressed="false"] { filter: grayscale(1); opacity: 0.6; }
@@ -510,3 +510,60 @@ button.thumb[aria-pressed="true"] { background: var(--accent-soft); border-color
 .saved-recipe h3:first-of-type { margin-top: 14px; }
 #spinoff-results > .error, #spinoff-results > .warning { margin: 0 0 14px; }
 .delete-recipe { margin: 8px 0 0; }
+
+/* ---------- List tab: plan and shopping list ---------- */
+
+.in-plan { color: var(--accent); font-weight: 600; }
+
+.plan-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.plan-item:first-child { border-top: 0; padding-top: 0; }
+.plan-item form { margin: 0; }
+.plan-item-text { flex: 1; min-width: 0; }
+.plan-title { margin: 6px 0 2px; font-size: 1.05rem; overflow-wrap: anywhere; }
+.plan-item .recipe-meta { margin: 0; }
+.plan-item .recipe-details { margin-top: 6px; }
+
+.list-hint { margin: 12px 0 4px; }
+
+/* A whole row is one big tap target: a tick box, then the name. */
+.check-form { flex: 1; min-width: 0; }
+button.check {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.check .box {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--muted);
+  border-radius: 7px;
+}
+.check-text { min-width: 0; overflow-wrap: anywhere; }
+.check-hint { display: block; color: var(--muted); font-size: 0.85rem; }
+.check.checked .check-text { color: var(--muted); text-decoration: line-through; }
+.check.checked .box { background: var(--accent); border-color: var(--accent); position: relative; }
+.check.checked .box::after {
+  /* the tick */
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 1px;
+  width: 6px;
+  height: 12px;
+  border: solid var(--accent-text);
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}

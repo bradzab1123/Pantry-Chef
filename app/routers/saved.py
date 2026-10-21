@@ -1,10 +1,10 @@
 """Saved tab (list, search, detail, rating, delete, spin-offs), plus the
-Save and 👍/👎 buttons on recipe cards (Cook results and spin-offs)."""
+Save, 👍/👎 and Add to plan buttons on recipe cards (Cook results and spin-offs)."""
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from sqlmodel import Session
 
-from app import cook, llm, saved
+from app import cook, llm, saved, shopping
 from app.db import get_session
 from app.models import SavedRecipe, Suggestion
 from app.web import is_htmx, redirect, render, render_partial
@@ -62,6 +62,7 @@ def spinoff_context(session: Session, recipe: SavedRecipe, notes=(), error="") -
     return {
         "suggestions": suggestions,
         "saved": saved.saved_for(session, suggestions),
+        "in_plan": shopping.in_plan(session, suggestions),
         "notes": list(notes),
         "error": error,
     }
@@ -78,6 +79,7 @@ def saved_detail(saved_id: int, request: Request, session: Session = Depends(get
         parent=parent,
         heads_up=saved.warnings(session, [recipe]).get(recipe.id, []),
         children=saved.spinoffs_of(session, recipe),
+        planned=shopping.is_planned(session, recipe.recipe_json),
         **spinoff_context(session, recipe),
     )
 
@@ -127,10 +129,16 @@ def card_actions_response(request: Request, session: Session, suggestion: Sugges
     """HTMX gets the refreshed buttons; a plain post goes back to the page the card is on."""
     if is_htmx(request):
         return render_partial(request, "partials/card_actions.html", s=suggestion,
-                              saved_recipe=saved.saved_for(session, [suggestion]).get(suggestion.saved_recipe_id))
+                              saved_recipe=saved.saved_for(session, [suggestion]).get(suggestion.saved_recipe_id),
+                              in_plan=shopping.in_plan(session, [suggestion]))
+    return redirect(card_page(suggestion))
+
+
+def card_page(suggestion: Suggestion) -> str:
+    """The page a card is shown on: its parent's Saved page, or Cook."""
     if suggestion.parent_recipe_id:
-        return redirect(f"/saved/{suggestion.parent_recipe_id}")
-    return redirect("/")
+        return f"/saved/{suggestion.parent_recipe_id}"
+    return "/"
 
 
 @router.post("/suggestions/{suggestion_id}/save")
@@ -148,3 +156,22 @@ def rate_suggestion(suggestion_id: int, request: Request, rating: str = Form("")
     suggestion = _suggestion_or_404(session, suggestion_id)
     saved.rate(session, saved.save_suggestion(session, suggestion), value)
     return card_actions_response(request, session, suggestion)
+
+
+@router.post("/suggestions/{suggestion_id}/plan")
+def plan_suggestion(suggestion_id: int, request: Request, session: Session = Depends(get_session)):
+    # The recipe is copied from the suggestion row, never from the form.
+    suggestion = _suggestion_or_404(session, suggestion_id)
+    shopping.add_to_plan(session, suggestion.recipe_json, suggestion.saved_recipe_id)
+    if is_htmx(request):
+        return render_partial(request, "partials/plan_button.html", planned=True)
+    return redirect(card_page(suggestion))
+
+
+@router.post("/saved/{saved_id}/plan")
+def plan_saved(saved_id: int, request: Request, session: Session = Depends(get_session)):
+    recipe = _saved_or_404(session, saved_id)
+    shopping.add_to_plan(session, recipe.recipe_json, recipe.id)
+    if is_htmx(request):
+        return render_partial(request, "partials/plan_button.html", planned=True)
+    return redirect(f"/saved/{recipe.id}")

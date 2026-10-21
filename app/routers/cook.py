@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, Form, Request
 from sqlmodel import Session
 
-from app import cook, llm, saved
+from app import cook, llm, saved, shopping
 from app.db import get_session
 from app.web import is_htmx, redirect, render, render_partial
 
@@ -22,6 +22,7 @@ def page_context(session: Session, req: cook.CookRequest) -> dict:
         "max_servings": cook.MAX_SERVINGS,
         "suggestions": suggestions,
         "saved": saved.saved_for(session, suggestions),
+        "in_plan": shopping.in_plan(session, suggestions),
         "notes": [],
         "error": "",
         **cook.chips(session, cook.eating(session, req.eaters)),
@@ -68,4 +69,6 @@ def generate(
     if not is_htmx(request):
         return redirect("/")
     return render_partial(request, "partials/cook_results.html",
-                          suggestions=result.suggestions, saved={}, notes=result.notes, error="")
+                          suggestions=result.suggestions, saved={},
+                          in_plan=shopping.in_plan(session, result.suggestions),
+                          notes=result.notes, error="")

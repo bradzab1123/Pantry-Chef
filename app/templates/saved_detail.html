@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 {# One saved recipe. Needs: r (SavedRecipe), recipe (its JSON), parent,
-   heads_up, children, and what partials/spinoff_results.html needs. #}
+   heads_up, children, planned, and what partials/spinoff_results.html needs. #}
 <p class="back"><a href="/saved">‹ All saved</a></p>
 
 <article class="card recipe saved-recipe">
@@ -22,9 +22,12 @@
   {% endif %}
   {% if recipe.diet_notes %}<p class="hint diet-notes">{{ recipe.diet_notes }}</p>{% endif %}
 
-  {% with rating = r.rating, rate_url = "/saved/" ~ r.id ~ "/rate", rate_target = "closest .rating" %}
-    {% include "partials/rating.html" %}
-  {% endwith %}
+  <div class="card-actions">
+    {% with rating = r.rating, rate_url = "/saved/" ~ r.id ~ "/rate", rate_target = "closest .rating" %}
+      {% include "partials/rating.html" %}
+    {% endwith %}
+    {% with plan_url = "/saved/" ~ r.id ~ "/plan" %}{% include "partials/plan_button.html" %}{% endwith %}
+  </div>
 
   {% include "partials/recipe_body.html" %}
 </article>

@@ -3,9 +3,9 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from sqlmodel import Session, select
 
+from app import pantry
 from app.db import get_session
 from app.models import PANTRY_STATUSES, PantryItem, Staple
-from app.pantry import add_items
 from app.web import is_htmx, redirect, render, render_partial
 
 router = APIRouter()
@@ -48,7 +48,7 @@ def add_pantry_items(
 ):
     if status not in PANTRY_STATUSES:
         raise HTTPException(400, "Unknown list")
-    result = add_items(session, names, status)
+    result = pantry.add_items(session, names, status)
     return lists_response(request, session, result.note(status))
 
 
@@ -65,18 +65,6 @@ def delete_pantry_item(item_id: int, request: Request, session: Session = Depend
 @router.post("/pantry/items/{item_id}/have")
 def move_to_have(item_id: int, request: Request, session: Session = Depends(get_session)):
     item = session.get(PantryItem, item_id)
-    if item and item.status == "buying":
-        duplicate = session.exec(
-            select(PantryItem).where(
-                PantryItem.status == "have",
-                PantryItem.normalized_name == item.normalized_name,
-            )
-        ).first()
-        if duplicate:
-            # Already in Have, so the Buying entry is simply done.
-            session.delete(item)
-        else:
-            item.status = "have"
-            session.add(item)
-        session.commit()
+    if item:
+        pantry.move_to_have(session, item)
     return lists_response(request, session)

@@ -1,6 +1,6 @@
 {# One recipe card (Cook results or spin-offs). Needs: s (a Suggestion),
-   recipe (its recipe_json) and saved ({saved_recipe_id: SavedRecipe}).
-   The "Add to plan" button arrives in Phase 6. #}
+   recipe (its recipe_json), saved ({saved_recipe_id: SavedRecipe}) and
+   in_plan (ids of the suggestions already planned). #}
 <article class="card recipe" id="suggestion-{{ s.id }}">
   <h2 class="recipe-title">{{ recipe.title }}</h2>
   <p class="recipe-meta">

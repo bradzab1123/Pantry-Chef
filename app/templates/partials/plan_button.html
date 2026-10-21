@@ -1,0 +1,12 @@
+{# "Add to plan", or "✓ In plan" once it's planned. Needs: planned, and
+   plan_url (where to post) when it isn't planned yet. #}
+<span class="plan-button">
+  {% if planned %}
+    <a class="button small in-plan" href="/list">✓ In plan</a>
+  {% else %}
+    <form method="post" action="{{ plan_url }}"
+          hx-post="{{ plan_url }}" hx-target="closest .plan-button" hx-swap="outerHTML">
+      <button type="submit" class="small">Add to plan</button>
+    </form>
+  {% endif %}
+</span>

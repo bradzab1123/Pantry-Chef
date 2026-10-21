@@ -15,7 +15,7 @@ from sqlmodel import Field, SQLModel
 
 LEVELS = ("never", "avoid")
 PANTRY_STATUSES = ("have", "buying")
-SHOPPING_SOURCES = ("plan", "manual")
+SHOPPING_SOURCES = ("plan", "manual", "buying")
 GENERATION_KINDS = ("generate", "spinoff")
 
 
@@ -94,6 +94,9 @@ class ShoppingItem(SQLModel, table=True):
     normalized_name: str
     checked: bool = False
     source: str  # one of SHOPPING_SOURCES
+    # The pantry row that checking this item created or moved into Have
+    # (so unchecking can undo it). None if it was already in Have.
+    pantry_item_id: int | None = Field(default=None, foreign_key="pantry_item.id")
 
 
 class Suggestion(SQLModel, table=True):

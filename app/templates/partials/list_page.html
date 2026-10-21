@@ -1,0 +1,105 @@
+{# The whole List tab: this week's plan and the shopping list. Swapped as a
+   whole after every change. Needs what shopping.list_context() returns. #}
+<div id="list-page">
+  <section class="card">
+    <h2>This week <span class="count">{{ plan|length }}</span></h2>
+    {% if plan %}
+      <ul class="rows">
+        {% for p in plan %}
+          {% set recipe = p.recipe_json %}
+          <li class="plan-item">
+            <div class="plan-item-text">
+              <h3 class="plan-title">{{ recipe.title }}</h3>
+              <p class="recipe-meta">
+                {{ recipe.total_time_minutes }} min ·
+                {% if recipe.missing_ingredients %}buy {{ recipe.missing_ingredients | join(", ") }}{% else %}nothing to buy{% endif %}
+              </p>
+              {% for h in heads_up.get(p.id, []) %}
+                <p class="error" role="alert">Heads up: contains “{{ h.matched | join("”, “") }}”, which is a <strong>never</strong> for {{ h.person }} ({{ h.term }}).</p>
+              {% endfor %}
+              <details class="recipe-details">
+                <summary>Ingredients &amp; steps</summary>
+                {% include "partials/recipe_body.html" %}
+                {% if p.saved_recipe_id %}<p><a href="/saved/{{ p.saved_recipe_id }}">Open saved recipe ›</a></p>{% endif %}
+              </details>
+            </div>
+            <form method="post" action="/plan/{{ p.id }}/delete"
+                  hx-post="/plan/{{ p.id }}/delete" hx-target="#list-page" hx-swap="outerHTML">
+              <button type="submit" class="icon" aria-label="Take {{ recipe.title }} off the plan">×</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="/plan/clear"
+            hx-post="/plan/clear" hx-target="#list-page" hx-swap="outerHTML"
+            hx-confirm="Clear this week's plan?">
+        <button type="submit" class="small danger">Clear plan</button>
+      </form>
+    {% else %}
+      <p class="muted">Nothing planned. Tap <strong>Add to plan</strong> on a recipe.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Shopping list <span class="count">{{ to_buy|length }}</span></h2>
+    {% if note %}<p class="note" role="status">{{ note }}</p>{% endif %}
+    <form method="post" action="/list/items"
+          hx-post="/list/items" hx-target="#list-page" hx-swap="outerHTML">
+      <label for="list-names" class="visually-hidden">Add items</label>
+      <div class="inline-field">
+        <input id="list-names" name="names" autocomplete="off" placeholder="Add items, e.g. milk, foil">
+        <button type="submit">Add</button>
+      </div>
+    </form>
+
+    {% if to_buy %}
+      <p class="hint list-hint">Tap an item when it's in the cart. It moves to Have.</p>
+      <ul class="rows">
+        {% for e in to_buy %}
+          <li class="row">
+            <form class="check-form" method="post" action="{{ e.check_url }}"
+                  hx-post="{{ e.check_url }}" hx-target="#list-page" hx-swap="outerHTML">
+              <button type="submit" class="check" aria-label="Got {{ e.name }}">
+                <span class="box" aria-hidden="true"></span>
+                <span class="check-text">
+                  {{ e.name }}
+                  {% if e.hint %}<span class="check-hint">{{ e.hint }}</span>{% endif %}
+                </span>
+              </button>
+            </form>
+            {% if e.delete_url %}
+              <form method="post" action="{{ e.delete_url }}"
+                    hx-post="{{ e.delete_url }}" hx-target="#list-page" hx-swap="outerHTML">
+                <button type="submit" class="icon" aria-label="Remove {{ e.name }}">×</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Nothing to buy.</p>
+    {% endif %}
+
+    {% if in_cart %}
+      <h3>In the cart <span class="count">{{ in_cart|length }}</span></h3>
+      <p class="hint">Already moved to Have. Tap to undo.</p>
+      <ul class="rows">
+        {% for row in in_cart %}
+          <li class="row">
+            <form class="check-form" method="post" action="/list/items/{{ row.id }}/uncheck"
+                  hx-post="/list/items/{{ row.id }}/uncheck" hx-target="#list-page" hx-swap="outerHTML">
+              <button type="submit" class="check checked" aria-label="Undo {{ row.name }}">
+                <span class="box" aria-hidden="true"></span>
+                <span class="check-text">{{ row.name }}</span>
+              </button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="/list/clear-checked"
+            hx-post="/list/clear-checked" hx-target="#list-page" hx-swap="outerHTML">
+        <button type="submit" class="small">Clear checked</button>
+      </form>
+    {% endif %}
+  </section>
+</div>

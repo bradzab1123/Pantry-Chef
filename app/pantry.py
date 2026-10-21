@@ -135,3 +135,34 @@ def add_items(session: Session, text: str, status: str) -> AddResult:
         result.added.append(name)
     session.commit()
     return result
+
+
+def find_item(session: Session, name: str) -> PantryItem | None:
+    """The pantry item (on either list) that counts as the same thing as `name`."""
+    return session.exec(
+        select(PantryItem).where(PantryItem.normalized_name == normalize_name(name))
+    ).first()
+
+
+def move_to_have(session: Session, item: PantryItem) -> PantryItem:
+    """Move a Buying item to Have, and return the Have row (commits).
+
+    If the same thing is somehow in Have already, the Buying entry is simply
+    done: it's deleted and the existing Have row is returned instead.
+    """
+    if item.status != "buying":
+        return item
+    duplicate = session.exec(
+        select(PantryItem).where(
+            PantryItem.status == "have",
+            PantryItem.normalized_name == item.normalized_name,
+        )
+    ).first()
+    if duplicate:
+        session.delete(item)
+        item = duplicate
+    else:
+        item.status = "have"
+        session.add(item)
+    session.commit()
+    return item

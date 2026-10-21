@@ -1,6 +1,7 @@
-{# Save and thumbs buttons on a recipe card. Needs: s (the Suggestion) and
-   saved_recipe (the SavedRecipe it became, or None). Rating an unsaved card
-   saves it too. #}
+{# Save, thumbs and Add to plan buttons on a recipe card. Needs: s (the
+   Suggestion), saved_recipe (the SavedRecipe it became, or None) and in_plan
+   (ids of the suggestions already planned). Rating an unsaved card saves it
+   too; planning one doesn't. #}
 <div class="card-actions">
   {% if saved_recipe %}
     <a class="button small saved-link" href="/saved/{{ saved_recipe.id }}">✓ Saved</a>
@@ -14,5 +15,8 @@
           rate_url = "/suggestions/" ~ s.id ~ "/rate",
           rate_target = "closest .card-actions" %}
     {% include "partials/rating.html" %}
+  {% endwith %}
+  {% with planned = s.id in (in_plan or []), plan_url = "/suggestions/" ~ s.id ~ "/plan" %}
+    {% include "partials/plan_button.html" %}
   {% endwith %}
 </div>

@@ -1,16 +1,16 @@
-"""FastAPI app: wires up the routers, plus the simple pages, /health and the service worker."""
+"""FastAPI app: wires up the routers, plus /health and the service worker."""
 
 import mimetypes
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from app.db import get_engine, migrate
-from app.routers import cook, pantry, saved, settings
-from app.web import APP_DIR, TABS, render  # noqa: F401  (TABS is imported by tests)
+from app.routers import cook, pantry, saved, settings, shopping
+from app.web import APP_DIR, TABS  # noqa: F401  (TABS is imported by tests)
 
 STATIC_DIR = APP_DIR / "static"
 
@@ -31,13 +31,7 @@ app.include_router(cook.router)
 app.include_router(pantry.router)
 app.include_router(saved.router)
 app.include_router(settings.router)
-
-
-# ---------- Pages (placeholders until later phases) ----------
-
-@app.get("/list")
-def list_page(request: Request):
-    return render(request, "list.html", "list", title="Shopping list")
+app.include_router(shopping.router)
 
 
 # ---------- Infrastructure ----------
