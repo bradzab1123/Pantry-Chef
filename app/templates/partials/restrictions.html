@@ -1,0 +1,28 @@
+{# One person's restriction cards plus the "add" form.
+   Needs: person, restrictions, form (values to prefill), error. #}
+<div id="restrictions-{{ person.id }}">
+  <h3>Restrictions</h3>
+  {% if restrictions %}
+    <ul class="restriction-list">
+      {% for r in restrictions %}
+        <li>{% include "partials/restriction.html" %}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No restrictions.</p>
+  {% endif %}
+
+  <details class="add-restriction" {% if error %}open{% endif %}>
+    <summary>Add a restriction for {{ person.name }}</summary>
+    <form method="post" action="/settings/restrictions"
+          hx-post="/settings/restrictions" hx-target="#restrictions-{{ person.id }}" hx-swap="outerHTML">
+      <input type="hidden" name="person_id" value="{{ person.id }}">
+      {% set prefix = "new-" ~ person.id %}
+      {% include "partials/restriction_fields.html" %}
+      {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+      <div class="button-row">
+        <button type="submit" class="primary">Add</button>
+      </div>
+    </form>
+  </details>
+</div>

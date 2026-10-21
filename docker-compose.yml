@@ -1,0 +1,29 @@
+# Pantry Chef on the home server.
+# No ports are published: cloudflared reaches the app over the shared Docker
+# network at http://pantry-chef:8000, and Cloudflare Access handles login.
+#
+# GHCR_USER and TUNNEL_NETWORK come from .env (see .env.example).
+
+services:
+  pantry-chef:
+    image: ghcr.io/${GHCR_USER:-your-github-user}/pantry-chef:latest
+    build: .
+    container_name: pantry-chef
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      # The slim image has no curl, so use Python to hit /health.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tunnel
+
+networks:
+  tunnel:
+    external: true
+    name: ${TUNNEL_NETWORK:-cloudflared}

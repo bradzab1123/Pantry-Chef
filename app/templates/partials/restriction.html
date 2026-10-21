@@ -1,0 +1,35 @@
+{# One restriction as a read-only card. Needs: r. #}
+<div id="restriction-{{ r.id }}" class="restriction{% if not r.active %} inactive{% endif %}">
+  <div class="restriction-head">
+    <strong class="restriction-term">{{ r.term }}</strong>
+    <span class="badge badge-{{ r.level }}">{{ r.level }}</span>
+    {% if not r.active %}<span class="badge badge-off">off</span>{% endif %}
+  </div>
+  {% if r.aliases %}<p class="detail"><span class="muted">Also:</span> {{ r.aliases|join(", ") }}</p>{% endif %}
+  {% if r.exceptions %}<p class="detail"><span class="muted">Except:</span> {{ r.exceptions|join(", ") }}</p>{% endif %}
+  {% if r.notes %}<p class="detail muted">{{ r.notes }}</p>{% endif %}
+
+  <div class="button-row">
+    <button type="button" class="small"
+            hx-get="/settings/restrictions/{{ r.id }}/edit"
+            hx-target="#restriction-{{ r.id }}" hx-swap="outerHTML">Edit</button>
+
+    {# Only `avoid` restrictions can be switched off; `never` is always enforced. #}
+    {% if r.level == "avoid" %}
+      <form method="post" action="/settings/restrictions/{{ r.id }}/toggle"
+            hx-post="/settings/restrictions/{{ r.id }}/toggle"
+            hx-target="#restriction-{{ r.id }}" hx-swap="outerHTML">
+        <button type="submit" class="small">{{ "Turn off" if r.active else "Turn on" }}</button>
+      </form>
+    {% else %}
+      <span class="hint">Always on</span>
+    {% endif %}
+
+    <form method="post" action="/settings/restrictions/{{ r.id }}/delete"
+          hx-post="/settings/restrictions/{{ r.id }}/delete"
+          hx-target="#restriction-{{ r.id }}" hx-swap="outerHTML"
+          hx-confirm="Delete the “{{ r.term }}” restriction?{% if r.level == 'never' %} Recipes will no longer be checked for it.{% endif %}">
+      <button type="submit" class="small danger">Delete</button>
+    </form>
+  </div>
+</div>

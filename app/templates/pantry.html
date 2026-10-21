@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>Add items</h2>
+  {# Resets the textarea after a successful add. Both buttons post the same
+     textarea; the clicked button's name/value picks the list. #}
+  <form method="post" action="/pantry/items"
+        hx-post="/pantry/items" hx-target="#pantry-lists" hx-swap="outerHTML"
+        hx-on::after-request="if (event.detail.successful) this.reset()">
+    <label for="names" class="visually-hidden">Items</label>
+    <textarea id="names" name="names" rows="3"
+              placeholder="chicken thighs, spinach&#10;lemons"></textarea>
+    <div class="button-row">
+      <button type="submit" name="status" value="have" class="primary">Add to Have</button>
+      <button type="submit" name="status" value="buying">Add to Buying</button>
+    </div>
+  </form>
+</section>
+
+{% include "partials/pantry_lists.html" %}
+
+<section class="card">
+  <h2>Staples</h2>
+  <p class="muted">
+    Always assumed on hand:
+    {% for s in staples %}{{ s.name }}{% if not loop.last %}, {% endif %}{% else %}none{% endfor %}.
+    <a href="/settings#staples">Edit in Settings</a>
+  </p>
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+{% for person, restrictions in people %}
+  <section class="card">
+    {% include "partials/person_name.html" %}
+    {% include "partials/restrictions.html" %}
+  </section>
+{% endfor %}
+
+<section class="card" id="staples-card">
+  {% include "partials/staples.html" %}
+</section>
+
+<section class="card">
+  <h2>Usage</h2>
+  <p class="muted">Generation count, tokens and cost arrive with recipe generation in Phase 4.</p>
+</section>
+{% endblock %}

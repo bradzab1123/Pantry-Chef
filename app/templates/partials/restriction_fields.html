@@ -1,0 +1,21 @@
+{# Form fields shared by the add and edit forms. Needs: form (values), prefix (unique id prefix). #}
+<label class="field-label" for="{{ prefix }}-term">Ingredient</label>
+<input id="{{ prefix }}-term" name="term" value="{{ form.term }}" required autocomplete="off"
+       placeholder="e.g. mushrooms">
+
+<label class="field-label" for="{{ prefix }}-level">Level</label>
+<select id="{{ prefix }}-level" name="level">
+  <option value="never" {% if form.level == "never" %}selected{% endif %}>Never: must not appear</option>
+  <option value="avoid" {% if form.level == "avoid" %}selected{% endif %}>Avoid: prefer not</option>
+</select>
+
+<label class="field-label" for="{{ prefix }}-aliases">Also counts as <span class="muted">(comma separated)</span></label>
+<input id="{{ prefix }}-aliases" name="aliases" value="{{ form.aliases }}" autocomplete="off"
+       placeholder="e.g. prawn, shrimp paste">
+
+<label class="field-label" for="{{ prefix }}-exceptions">Except <span class="muted">(fine even though they contain the word)</span></label>
+<input id="{{ prefix }}-exceptions" name="exceptions" value="{{ form.exceptions }}" autocomplete="off"
+       placeholder="e.g. cornstarch">
+
+<label class="field-label" for="{{ prefix }}-notes">Notes</label>
+<input id="{{ prefix }}-notes" name="notes" value="{{ form.notes }}" autocomplete="off">

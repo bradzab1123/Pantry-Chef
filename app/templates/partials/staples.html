@@ -1,0 +1,35 @@
+{# Staples editor. Needs: staples, note (optional). #}
+<div id="staples">
+  <h2>Staples</h2>
+  <p class="hint">Always assumed on hand when suggesting recipes. Switch one off if you've run out.</p>
+  {% if note %}<p class="note" role="status">{{ note }}</p>{% endif %}
+
+  <ul class="rows">
+    {% for s in staples %}
+      <li class="row{% if not s.enabled %} inactive{% endif %}">
+        <span class="row-label">{{ s.name }}</span>
+        <form method="post" action="/settings/staples/{{ s.id }}/toggle"
+              hx-post="/settings/staples/{{ s.id }}/toggle" hx-target="#staples" hx-swap="outerHTML">
+          <button type="submit" class="switch" role="switch"
+                  aria-checked="{{ 'true' if s.enabled else 'false' }}"
+                  aria-label="{{ s.name }} on hand"></button>
+        </form>
+        <form method="post" action="/settings/staples/{{ s.id }}/delete"
+              hx-post="/settings/staples/{{ s.id }}/delete" hx-target="#staples" hx-swap="outerHTML">
+          <button type="submit" class="icon" aria-label="Remove {{ s.name }}">×</button>
+        </form>
+      </li>
+    {% else %}
+      <li class="muted">No staples.</li>
+    {% endfor %}
+  </ul>
+
+  <form method="post" action="/settings/staples"
+        hx-post="/settings/staples" hx-target="#staples" hx-swap="outerHTML">
+    <label for="new-staples" class="field-label">Add staples</label>
+    <div class="inline-field">
+      <input id="new-staples" name="names" placeholder="e.g. soy sauce, rice" autocomplete="off">
+      <button type="submit">Add</button>
+    </div>
+  </form>
+</div>

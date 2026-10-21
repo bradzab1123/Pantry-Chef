@@ -1,0 +1,5 @@
+# Dev/test dependencies. Install with: pip install -r requirements-dev.txt
+-r requirements.txt
+pytest==9.1.1
+httpx2==2.15.1    # needed by FastAPI's TestClient
+pillow==13.0.0    # only for scripts/make_icons.py

@@ -1,0 +1,11 @@
+# Secrets: never commit
+.env
+
+# Local data (SQLite lives here)
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/

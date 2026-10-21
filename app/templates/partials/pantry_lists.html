@@ -1,0 +1,48 @@
+{# The Have and Buying lists. Swapped as a whole after every change. #}
+<div id="pantry-lists">
+  {% if note %}<p class="note" role="status">{{ note }}</p>{% endif %}
+
+  <section class="card">
+    <h2>Have <span class="count">{{ have|length }}</span></h2>
+    {% if have %}
+      <p class="hint">Tap an item when it's used up.</p>
+      <ul class="chips">
+        {% for item in have %}
+          <li>
+            <form method="post" action="/pantry/items/{{ item.id }}/delete"
+                  hx-post="/pantry/items/{{ item.id }}/delete" hx-target="#pantry-lists" hx-swap="outerHTML">
+              <button type="submit" class="chip" aria-label="Remove {{ item.name }}">
+                {{ item.name }} <span class="chip-x" aria-hidden="true">×</span>
+              </button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Nothing yet. Add what's in the fridge and cupboards.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Buying <span class="count">{{ buying|length }}</span></h2>
+    {% if buying %}
+      <ul class="rows">
+        {% for item in buying %}
+          <li class="row">
+            <span class="row-label">{{ item.name }}</span>
+            <form method="post" action="/pantry/items/{{ item.id }}/have"
+                  hx-post="/pantry/items/{{ item.id }}/have" hx-target="#pantry-lists" hx-swap="outerHTML">
+              <button type="submit" class="small">Got it</button>
+            </form>
+            <form method="post" action="/pantry/items/{{ item.id }}/delete"
+                  hx-post="/pantry/items/{{ item.id }}/delete" hx-target="#pantry-lists" hx-swap="outerHTML">
+              <button type="submit" class="icon" aria-label="Remove {{ item.name }}">×</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Nothing on the way.</p>
+    {% endif %}
+  </section>
+</div>

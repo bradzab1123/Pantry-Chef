@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  {# viewport-fit=cover lets the page draw under the notch; CSS adds safe-area padding back. #}
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{ title }} · Pantry Chef</title>
+
+  {# PWA / iOS home-screen app #}
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Pantry Chef">
+  <meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161a17" media="(prefers-color-scheme: dark)">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
+  {# use-credentials: send the Cloudflare Access cookie when fetching the manifest #}
+  <link rel="manifest" href="/static/manifest.webmanifest" crossorigin="use-credentials">
+
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/htmx.min.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>{{ title }}</h1>
+  </header>
+
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <nav class="tabbar" aria-label="Main">
+    {% for key, label, url in tabs %}
+      <a href="{{ url }}" class="tab{% if key == active_tab %} active{% endif %}"
+         {% if key == active_tab %}aria-current="page"{% endif %}>
+        {% include "icons/" ~ key ~ ".svg" %}
+        <span>{{ label }}</span>
+      </a>
+    {% endfor %}
+  </nav>
+
+  <script>
+    // Register the service worker (static-asset caching only; see /sw.js).
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>

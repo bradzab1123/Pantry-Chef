@@ -1,0 +1,6 @@
+# Runtime dependencies (installed in the Docker image).
+fastapi==0.156.4
+uvicorn==0.54.0
+jinja2==3.1.6
+sqlmodel==0.0.48
+python-multipart==0.0.32   # lets FastAPI parse HTML form posts

@@ -1,0 +1,27 @@
+{# Edit form that replaces a restriction card in place.
+   Needs: r, person, form (values), error, confirm_downgrade. #}
+<form id="restriction-{{ r.id }}" class="restriction editing"
+      method="post" action="/settings/restrictions/{{ r.id }}"
+      hx-post="/settings/restrictions/{{ r.id }}" hx-swap="outerHTML">
+  {% set prefix = "edit-" ~ r.id %}
+  {% include "partials/restriction_fields.html" %}
+
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+  {% if confirm_downgrade %}
+    {# Second step of a never -> avoid change. Submitting again with this
+       hidden field confirms it. #}
+    <input type="hidden" name="confirm_downgrade" value="true">
+    <p class="warning" role="alert">
+      Changing <strong>{{ r.term }}</strong> to “avoid” means recipes for {{ person.name }}
+      will no longer be checked for it. Tap Save again to confirm.
+    </p>
+  {% endif %}
+
+  <div class="button-row">
+    <button type="submit" class="primary">{{ "Yes, save" if confirm_downgrade else "Save" }}</button>
+    <button type="button"
+            hx-get="/settings/restrictions/{{ r.id }}"
+            hx-target="#restriction-{{ r.id }}" hx-swap="outerHTML">Cancel</button>
+  </div>
+</form>

@@ -1,0 +1,13 @@
+{# A person's display name. `typed` / `error` / `saved` are set after a save. #}
+<form id="person-name-{{ person.id }}" class="person-name"
+      method="post" action="/settings/people/{{ person.id }}"
+      hx-post="/settings/people/{{ person.id }}" hx-swap="outerHTML">
+  <label for="name-{{ person.id }}" class="field-label">Name</label>
+  <div class="inline-field">
+    <input id="name-{{ person.id }}" name="name" maxlength="40" required
+           value="{{ typed if error else person.name }}" autocomplete="off">
+    <button type="submit">Save</button>
+  </div>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>
+  {% elif saved %}<p class="note" role="status">Saved.</p>{% endif %}
+</form>
