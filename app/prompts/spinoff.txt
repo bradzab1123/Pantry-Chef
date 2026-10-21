@@ -1,0 +1,36 @@
+{#- The user message for a spin-off. Rendered by app/llm.py with the context
+    from app/saved.py (spin_off). Block tags go on their own lines: the
+    environment trims the newline after each one. -#}
+We liked this recipe and want {{ count }} variation{{ "s" if count != 1 else "" }} of it.
+
+Original: {{ original.title }}
+{{ original.summary }}
+Serves {{ original.servings }}.
+Ingredients:
+{% for i in original.ingredients %}
+- {{ [i.quantity, i.unit, i.name] | select | join(" ") }}
+{% endfor %}
+Steps:
+{% for step in original.steps %}
+{{ loop.index }}. {{ step }}
+{% endfor %}
+
+Each variation keeps the core idea of the original but changes ONE main thing: the protein, the cuisine, or the cooking method. Where you can, make each variation change a different one of those. Set variation_note to one short line saying what changed, e.g. "Swapped the chicken for tofu." Keep the same number of servings.
+
+Who's eating: {{ eaters | join(" and ") }}
+
+{% include "_household.txt" %}
+{% if liked %}
+
+Recipes we liked:
+{% for title in liked %}
+- {{ title }}
+{% endfor %}
+{% endif %}
+{% if disliked %}
+
+Recipes we didn't like:
+{% for title in disliked %}
+- {{ title }}
+{% endfor %}
+{% endif %}

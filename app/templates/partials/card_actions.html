@@ -1,0 +1,18 @@
+{# Save and thumbs buttons on a recipe card. Needs: s (the Suggestion) and
+   saved_recipe (the SavedRecipe it became, or None). Rating an unsaved card
+   saves it too. #}
+<div class="card-actions">
+  {% if saved_recipe %}
+    <a class="button small saved-link" href="/saved/{{ saved_recipe.id }}">✓ Saved</a>
+  {% else %}
+    <form method="post" action="/suggestions/{{ s.id }}/save"
+          hx-post="/suggestions/{{ s.id }}/save" hx-target="closest .card-actions" hx-swap="outerHTML">
+      <button type="submit" class="small">Save</button>
+    </form>
+  {% endif %}
+  {% with rating = saved_recipe.rating if saved_recipe else 0,
+          rate_url = "/suggestions/" ~ s.id ~ "/rate",
+          rate_target = "closest .card-actions" %}
+    {% include "partials/rating.html" %}
+  {% endwith %}
+</div>

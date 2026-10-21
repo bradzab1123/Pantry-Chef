@@ -1,0 +1,13 @@
+{# Thumbs up / down buttons. Needs: rating (1, 0 or -1), rate_url (where to
+   post) and rate_target (the HTMX target the response replaces). Tapping the
+   current rating again clears it. #}
+<div class="rating">
+  {% for value, icon, label in [(1, "👍", "Thumbs up"), (-1, "👎", "Thumbs down")] %}
+    <form method="post" action="{{ rate_url }}"
+          hx-post="{{ rate_url }}" hx-target="{{ rate_target }}" hx-swap="outerHTML">
+      <input type="hidden" name="rating" value="{{ value }}">
+      <button type="submit" class="small thumb" aria-label="{{ label }}"
+              aria-pressed="{{ 'true' if rating == value else 'false' }}">{{ icon }}</button>
+    </form>
+  {% endfor %}
+</div>

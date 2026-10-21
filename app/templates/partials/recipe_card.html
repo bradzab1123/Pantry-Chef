@@ -1,10 +1,12 @@
-{# One recipe card. Needs: s (a Suggestion) and recipe (its recipe_json).
-   Save / rating / Add to plan buttons arrive in Phases 5 and 6. #}
+{# One recipe card (Cook results or spin-offs). Needs: s (a Suggestion),
+   recipe (its recipe_json) and saved ({saved_recipe_id: SavedRecipe}).
+   The "Add to plan" button arrives in Phase 6. #}
 <article class="card recipe" id="suggestion-{{ s.id }}">
   <h2 class="recipe-title">{{ recipe.title }}</h2>
   <p class="recipe-meta">
     {{ recipe.total_time_minutes }} min · {{ recipe.difficulty }}{% if recipe.cuisine %} · {{ recipe.cuisine }}{% endif %} · serves {{ recipe.servings }}
   </p>
+  {% if recipe.variation_note %}<p class="variation-note"><strong>What changed:</strong> {{ recipe.variation_note }}</p>{% endif %}
   <p class="recipe-summary">{{ recipe.summary }}</p>
 
   {% if recipe.missing_ingredients %}
@@ -16,19 +18,8 @@
 
   <details class="recipe-details">
     <summary>Ingredients &amp; steps</summary>
-    <h3>Ingredients</h3>
-    <ul class="ingredients">
-      {% for i in recipe.ingredients %}
-        <li>
-          {{ [i.quantity, i.unit, i.name] | select | join(" ") }}
-          {% if i.source == "buy" %}<span class="tag tag-buy">buy</span>
-          {% elif i.source == "staple" %}<span class="tag">staple</span>{% endif %}
-        </li>
-      {% endfor %}
-    </ul>
-    <h3>Steps</h3>
-    <ol class="steps">
-      {% for step in recipe.steps %}<li>{{ step }}</li>{% endfor %}
-    </ol>
+    {% include "partials/recipe_body.html" %}
   </details>
+
+  {% with saved_recipe = saved.get(s.saved_recipe_id) %}{% include "partials/card_actions.html" %}{% endwith %}
 </article>

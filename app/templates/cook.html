@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 {# Generating takes a while, so: the indicator shows while the request runs,
-   and the button is disabled so a second tap can't start a second request. #}
+   and the button is disabled so a second tap can't start a second request.
+   hx-disinherit keeps those two off the "who's eating" radios inside the
+   form, so swapping the chips doesn't flash the "Cooking up ideas" note. #}
 <form class="card cook-form" method="post" action="/cook/generate"
       hx-post="/cook/generate" hx-target="#results" hx-swap="outerHTML"
-      hx-indicator="#generating" hx-disabled-elt="find button[type=submit]">
+      hx-indicator="#generating" hx-disabled-elt="find button[type=submit]"
+      hx-disinherit="hx-indicator hx-disabled-elt">
 
   <fieldset class="choice-group">
     <legend class="field-label">Who's eating</legend>

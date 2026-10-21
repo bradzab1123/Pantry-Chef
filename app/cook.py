@@ -140,30 +140,38 @@ def recent_ratings(session: Session, rating: int) -> list[str]:
     return list(rows)
 
 
+def household_context(session: Session, never: list[Restriction],
+                      avoid: list[Restriction]) -> dict:
+    """What _household.txt needs: what's on hand, plus the restrictions."""
+    pantry = session.exec(select(PantryItem).order_by(PantryItem.name)).all()
+    staples = session.exec(
+        select(Staple).where(Staple.enabled == True).order_by(Staple.name)  # noqa: E712
+    ).all()
+    return {
+        "pantry": [i.name for i in pantry],
+        "staples": [s.name for s in staples],
+        "never": never,
+        "avoid": [r.term for r in avoid],
+        "liked": recent_ratings(session, 1),
+        "disliked": recent_ratings(session, -1),
+    }
+
+
 def prompt_context(session: Session, req: CookRequest, people: list[Person],
                    never: list[Restriction]) -> dict:
     """Everything generate.txt needs."""
     avoid = active_restrictions(session, people, "avoid")
     if req.avoid_on is not None:
         avoid = [r for r in avoid if r.id in req.avoid_on]
-    pantry = session.exec(select(PantryItem).order_by(PantryItem.name)).all()
-    staples = session.exec(
-        select(Staple).where(Staple.enabled == True).order_by(Staple.name)  # noqa: E712
-    ).all()
     return {
         "count": req.count,
         "eaters": [p.name for p in people],
-        "pantry": [i.name for i in pantry],
-        "staples": [s.name for s in staples],
-        "never": never,
-        "avoid": [r.term for r in avoid],
         "skip": req.skip,
         "meal_type": req.meal_type,
         "max_time": "any" if req.max_time == "any" else f"{req.max_time} minutes",
         "servings": req.servings,
         "cuisine": req.cuisine,
-        "liked": recent_ratings(session, 1),
-        "disliked": recent_ratings(session, -1),
+        **household_context(session, never, avoid),
     }
 
 
@@ -258,13 +266,68 @@ class GenerateResult:
     notes: list[str] = field(default_factory=list)
 
 
-def latest_suggestions(session: Session) -> list[Suggestion]:
-    return list(session.exec(select(Suggestion).order_by(Suggestion.id)))
+def review_batch(session: Session, kind: str, prompt: str, recipes: list[Recipe],
+                 never: list[Restriction], available: dict[str, str]) -> tuple[list[Recipe], list[str]]:
+    """Check every recipe; ask ONCE for replacements of any that fail.
+
+    Used for both Cook ("generate") and spin-offs ("spinoff"), so every
+    recipe anyone sees has been through review() and the never filter.
+    Returns (recipes that passed, tidied) and notes about any we dropped.
+    """
+    kept: list[Recipe] = []
+    failed: list[tuple[Recipe, Problem]] = []
+    for recipe in recipes:
+        tidied, problem = review(recipe, never, available)
+        if problem:
+            failed.append((recipe, problem))
+        else:
+            kept.append(tidied)
+
+    removed: list[str] = []  # problem kinds of recipes we had to drop
+    if failed:
+        fix = llm.render_prompt(
+            "fix.txt",
+            problems=[(recipe.title, problem.message) for recipe, problem in failed],
+            count=len(failed),
+            keep_titles=[r.title for r in kept],
+        )
+        try:
+            replacements = llm.request_recipes(session, kind, prompt + "\n" + fix).recipes[: len(failed)]
+        except llm.GenerationError:
+            replacements = []  # keep the good ones; the failed ones are dropped below
+
+        # Slot i of the replacements stands in for failed recipe i.
+        for i, (_original, problem) in enumerate(failed):
+            if i >= len(replacements):
+                removed.append(problem.kind)
+                continue
+            tidied, new_problem = review(replacements[i], never, available)
+            if new_problem:
+                removed.append(new_problem.kind)
+            else:
+                kept.append(tidied)
+
+    return kept, removal_notes(removed)
 
 
-def _save_batch(session: Session, recipes: list[Recipe]) -> list[Suggestion]:
-    session.exec(delete(Suggestion))
-    rows = [Suggestion(recipe_json=r.model_dump()) for r in recipes]
+def _batch_filter(query, parent_recipe_id: int | None):
+    """Limit a Suggestion query to one batch: Cook's, or one recipe's spin-offs."""
+    if parent_recipe_id is None:
+        return query.where(Suggestion.parent_recipe_id == None)  # noqa: E711 (SQL IS NULL)
+    return query.where(Suggestion.parent_recipe_id == parent_recipe_id)
+
+
+def latest_suggestions(session: Session, parent_recipe_id: int | None = None) -> list[Suggestion]:
+    """The Cook batch, or (with parent_recipe_id) that recipe's latest spin-offs."""
+    query = _batch_filter(select(Suggestion), parent_recipe_id).order_by(Suggestion.id)
+    return list(session.exec(query))
+
+
+def save_batch(session: Session, recipes: list[Recipe],
+               parent_recipe_id: int | None = None) -> list[Suggestion]:
+    """Replace one batch (and only that batch) with these recipes."""
+    session.exec(_batch_filter(delete(Suggestion), parent_recipe_id))
+    rows = [Suggestion(recipe_json=r.model_dump(), parent_recipe_id=parent_recipe_id) for r in recipes]
     session.add_all(rows)
     session.commit()
     for row in rows:
@@ -281,38 +344,5 @@ def generate(session: Session, req: CookRequest) -> GenerateResult:
 
     llm.check_cost_guard(session)
     first = llm.request_recipes(session, "generate", prompt).recipes[: req.count]
-
-    kept: list[Recipe] = []
-    failed: list[tuple[Recipe, Problem]] = []
-    for recipe in first:
-        tidied, problem = review(recipe, never, available)
-        if problem:
-            failed.append((recipe, problem))
-        else:
-            kept.append(tidied)
-
-    removed: list[str] = []  # problem kinds of recipes we had to drop
-    if failed:
-        fix = llm.render_prompt(
-            "fix.txt",
-            problems=[(recipe.title, problem.message) for recipe, problem in failed],
-            count=len(failed),
-            keep_titles=[r.title for r in kept],
-        )
-        try:
-            replacements = llm.request_recipes(session, "generate", prompt + "\n" + fix).recipes[: len(failed)]
-        except llm.GenerationError:
-            replacements = []  # keep the good ones; the failed ones are dropped below
-
-        # Slot i of the replacements stands in for failed recipe i.
-        for i, (_original, problem) in enumerate(failed):
-            if i >= len(replacements):
-                removed.append(problem.kind)
-                continue
-            tidied, new_problem = review(replacements[i], never, available)
-            if new_problem:
-                removed.append(new_problem.kind)
-            else:
-                kept.append(tidied)
-
-    return GenerateResult(_save_batch(session, kept), removal_notes(removed))
+    kept, notes = review_batch(session, "generate", prompt, first, never, available)
+    return GenerateResult(save_batch(session, kept), notes)

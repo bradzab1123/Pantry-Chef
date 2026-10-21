@@ -1,0 +1,29 @@
+{#- Shared by generate.txt and spinoff.txt: what's on hand and the
+    restrictions, so the wording can't drift between the two prompts. -#}
+Pantry (have or buying):
+{% for item in pantry %}
+- {{ item }}
+{% else %}
+- (empty)
+{% endfor %}
+
+Staples (always on hand):
+{% for item in staples %}
+- {{ item }}
+{% else %}
+- (none)
+{% endfor %}
+
+Never (absolute):
+{% for r in never %}
+- {{ r.term }}{{ " (also: " ~ r.aliases | join(", ") ~ ")" if r.aliases else "" }}{{ " (fine: " ~ r.exceptions | join(", ") ~ ")" if r.exceptions else "" }}
+{% else %}
+- (none)
+{% endfor %}
+
+Avoid:
+{% for term in avoid %}
+- {{ term }}
+{% else %}
+- (none)
+{% endfor %}

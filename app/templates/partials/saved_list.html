@@ -1,0 +1,33 @@
+{# The list on the Saved tab. Needs: recipes, q, fav, heads_up ({id: [HeadsUp]}). #}
+<section id="saved-list" aria-live="polite">
+  <nav class="segmented filter" aria-label="Filter">
+    <a href="/saved{{ '?q=' ~ q|urlencode if q else '' }}"
+       {% if not fav %}aria-current="true"{% endif %}>All</a>
+    <a href="/saved?fav=1{{ '&q=' ~ q|urlencode if q else '' }}"
+       {% if fav %}aria-current="true"{% endif %}>👍 Favorites</a>
+  </nav>
+
+  {% for r in recipes %}
+    {% set recipe = r.recipe_json %}
+    <article class="card saved-row">
+      <div class="saved-row-text">
+        <h2 class="recipe-title"><a href="/saved/{{ r.id }}">{{ r.title }}</a></h2>
+        <p class="recipe-meta">
+          {{ recipe.total_time_minutes }} min{% if recipe.cuisine %} · {{ recipe.cuisine }}{% endif %}{% if r.parent_recipe_id %} · spin-off{% endif %}
+        </p>
+        {% if heads_up.get(r.id) %}
+          <p class="heads-up-mark">⚠ Contains {{ heads_up[r.id] | map(attribute="term") | join(", ") }}</p>
+        {% endif %}
+      </div>
+      {% with rating = r.rating, rate_url = "/saved/" ~ r.id ~ "/rate", rate_target = "closest .rating" %}
+        {% include "partials/rating.html" %}
+      {% endwith %}
+    </article>
+  {% else %}
+    <p class="muted empty-results">
+      {% if q %}No saved recipes match “{{ q }}”.
+      {% elif fav %}No favorites yet. Tap 👍 on a recipe you loved.
+      {% else %}Nothing saved yet. Tap <strong>Save</strong> or 👍 on a recipe in Cook.{% endif %}
+    </p>
+  {% endfor %}
+</section>

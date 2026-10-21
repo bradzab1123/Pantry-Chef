@@ -5,33 +5,7 @@ Suggest {{ count }} recipe{{ "s" if count != 1 else "" }}.
 
 Who's eating: {{ eaters | join(" and ") }}
 
-Pantry (have or buying):
-{% for item in pantry %}
-- {{ item }}
-{% else %}
-- (empty)
-{% endfor %}
-
-Staples (always on hand):
-{% for item in staples %}
-- {{ item }}
-{% else %}
-- (none)
-{% endfor %}
-
-Never (absolute):
-{% for r in never %}
-- {{ r.term }}{{ " (also: " ~ r.aliases | join(", ") ~ ")" if r.aliases else "" }}{{ " (fine: " ~ r.exceptions | join(", ") ~ ")" if r.exceptions else "" }}
-{% else %}
-- (none)
-{% endfor %}
-
-Avoid:
-{% for term in avoid %}
-- {{ term }}
-{% else %}
-- (none)
-{% endfor %}
+{% include "_household.txt" %}
 
 Skip tonight: {{ skip or "(nothing)" }}
 Meal type: {{ meal_type }}

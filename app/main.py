@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from app.db import get_engine, migrate
-from app.routers import cook, pantry, settings
+from app.routers import cook, pantry, saved, settings
 from app.web import APP_DIR, TABS, render  # noqa: F401  (TABS is imported by tests)
 
 STATIC_DIR = APP_DIR / "static"
@@ -29,15 +29,11 @@ app = FastAPI(title="Pantry Chef", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.include_router(cook.router)
 app.include_router(pantry.router)
+app.include_router(saved.router)
 app.include_router(settings.router)
 
 
 # ---------- Pages (placeholders until later phases) ----------
-
-@app.get("/saved")
-def saved_page(request: Request):
-    return render(request, "saved.html", "saved", title="Saved")
-
 
 @app.get("/list")
 def list_page(request: Request):

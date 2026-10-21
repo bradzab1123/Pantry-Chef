@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, Form, Request
 from sqlmodel import Session
 
-from app import cook, llm
+from app import cook, llm, saved
 from app.db import get_session
 from app.web import is_htmx, redirect, render, render_partial
 
@@ -12,6 +12,7 @@ router = APIRouter()
 
 def page_context(session: Session, req: cook.CookRequest) -> dict:
     """Everything cook.html needs (form, chips and the latest results)."""
+    suggestions = cook.latest_suggestions(session)
     return {
         "people": cook.all_people(session),
         "form": req,
@@ -19,7 +20,8 @@ def page_context(session: Session, req: cook.CookRequest) -> dict:
         "max_times": cook.MAX_TIMES,
         "max_count": cook.MAX_COUNT,
         "max_servings": cook.MAX_SERVINGS,
-        "suggestions": cook.latest_suggestions(session),
+        "suggestions": suggestions,
+        "saved": saved.saved_for(session, suggestions),
         "notes": [],
         "error": "",
         **cook.chips(session, cook.eating(session, req.eaters)),
@@ -66,4 +68,4 @@ def generate(
     if not is_htmx(request):
         return redirect("/")
     return render_partial(request, "partials/cook_results.html",
-                          suggestions=result.suggestions, notes=result.notes, error="")
+                          suggestions=result.suggestions, saved={}, notes=result.notes, error="")

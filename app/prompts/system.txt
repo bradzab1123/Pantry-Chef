@@ -21,4 +21,4 @@ Recipes
 - Write everything (quantities and summary) for the requested number of servings.
 - Lean toward the style of the liked recipes, and away from the disliked ones, without repeating them.
 - diet_notes: one short line on how the recipe fits the restrictions.
-- variation_note: null.
+- variation_note: null, unless the request asks for variations.

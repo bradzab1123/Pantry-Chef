@@ -1,0 +1,15 @@
+{# Ingredients and steps of one recipe. Needs: recipe (the recipe JSON). #}
+<h3>Ingredients</h3>
+<ul class="ingredients">
+  {% for i in recipe.ingredients %}
+    <li>
+      {{ [i.quantity, i.unit, i.name] | select | join(" ") }}
+      {% if i.source == "buy" %}<span class="tag tag-buy">buy</span>
+      {% elif i.source == "staple" %}<span class="tag">staple</span>{% endif %}
+    </li>
+  {% endfor %}
+</ul>
+<h3>Steps</h3>
+<ol class="steps">
+  {% for step in recipe.steps %}<li>{{ step }}</li>{% endfor %}
+</ol>

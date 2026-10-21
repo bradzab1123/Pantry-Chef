@@ -1,0 +1,10 @@
+{# The latest spin-off cards for one saved recipe. Needs: suggestions,
+   saved, notes, error. #}
+<section id="spinoff-results" aria-live="polite">
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% for note in notes %}<p class="warning" role="status">{{ note }}</p>{% endfor %}
+  {% for s in suggestions %}
+    {% set recipe = s.recipe_json %}
+    {% include "partials/recipe_card.html" %}
+  {% endfor %}
+</section>

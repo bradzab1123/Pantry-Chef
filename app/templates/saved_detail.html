@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+{# One saved recipe. Needs: r (SavedRecipe), recipe (its JSON), parent,
+   heads_up, children, and what partials/spinoff_results.html needs. #}
+<p class="back"><a href="/saved">‹ All saved</a></p>
+
+<article class="card recipe saved-recipe">
+  <h2 class="recipe-title">{{ r.title }}</h2>
+  <p class="recipe-meta">
+    {{ recipe.total_time_minutes }} min · {{ recipe.difficulty }}{% if recipe.cuisine %} · {{ recipe.cuisine }}{% endif %} · serves {{ recipe.servings }}
+  </p>
+  {% if parent %}<p class="hint">Spin-off of <a href="/saved/{{ parent.id }}">{{ parent.title }}</a></p>{% endif %}
+  {% if recipe.variation_note %}<p class="variation-note"><strong>What changed:</strong> {{ recipe.variation_note }}</p>{% endif %}
+
+  {% for h in heads_up %}
+    <p class="error" role="alert">Heads up: contains “{{ h.matched | join("”, “") }}”, which is a <strong>never</strong> for {{ h.person }} ({{ h.term }}).</p>
+  {% endfor %}
+
+  <p class="recipe-summary">{{ recipe.summary }}</p>
+  {% if recipe.missing_ingredients %}
+    <p class="need-to-buy"><strong>Need to buy:</strong> {{ recipe.missing_ingredients | join(", ") }}</p>
+  {% endif %}
+  {% if recipe.diet_notes %}<p class="hint diet-notes">{{ recipe.diet_notes }}</p>{% endif %}
+
+  {% with rating = r.rating, rate_url = "/saved/" ~ r.id ~ "/rate", rate_target = "closest .rating" %}
+    {% include "partials/rating.html" %}
+  {% endwith %}
+
+  {% include "partials/recipe_body.html" %}
+</article>
+
+<section class="card">
+  <h2>Spin-offs</h2>
+  <p class="hint">Three variations that keep the idea but change the protein, cuisine or cooking method. They follow everyone's restrictions.</p>
+  {% if children %}
+    <ul class="rows">
+      {% for c in children %}<li class="row"><a class="row-label" href="/saved/{{ c.id }}">{{ c.title }}</a></li>{% endfor %}
+    </ul>
+  {% endif %}
+  <form method="post" action="/saved/{{ r.id }}/spinoff"
+        hx-post="/saved/{{ r.id }}/spinoff" hx-target="#spinoff-results" hx-swap="outerHTML"
+        hx-indicator="#spinning" hx-disabled-elt="find button[type=submit]">
+    <button type="submit" class="primary wide">Spin off 3 variations</button>
+  </form>
+  <p id="spinning" class="htmx-indicator generating" role="status">
+    <span class="spinner" aria-hidden="true"></span> Spinning off ideas… this can take 20–30 seconds.
+  </p>
+</section>
+
+{% include "partials/spinoff_results.html" %}
+
+{# A plain (non-HTMX) post, after the browser's own "are you sure?". #}
+<form class="delete-recipe" method="post" action="/saved/{{ r.id }}/delete"
+      onsubmit="return confirm('Delete this recipe from Saved?')">
+  <button type="submit" class="danger wide">Delete recipe</button>
+</form>
+{% endblock %}

@@ -1,7 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="card">
-  <h2>Saved recipes</h2>
-  <p class="muted">Saved recipes, ratings and spin-offs arrive in Phase 5.</p>
-</section>
+{# Search works without JavaScript (a GET form); with HTMX, typing swaps in
+   just the list (which includes the All / Favorites links, so they keep
+   the search text). #}
+<form class="saved-search" method="get" action="/saved"
+      hx-get="/saved" hx-target="#saved-list" hx-swap="outerHTML"
+      hx-trigger="input changed delay:300ms from:#q, search from:#q, submit">
+  <label for="q" class="visually-hidden">Search saved recipes</label>
+  <input id="q" name="q" type="search" value="{{ q }}" placeholder="Search by title"
+         autocomplete="off" enterkeyhint="search">
+  {% if fav %}<input type="hidden" name="fav" value="1">{% endif %}
+</form>
+
+{% include "partials/saved_list.html" %}
 {% endblock %}

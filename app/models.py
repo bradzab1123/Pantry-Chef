@@ -97,13 +97,20 @@ class ShoppingItem(SQLModel, table=True):
 
 
 class Suggestion(SQLModel, table=True):
-    """One recipe from the latest generation (the whole batch is replaced each time)."""
+    """One recipe from the latest batch (each new batch replaces the old one).
+
+    There's one Cook batch (parent_recipe_id is None) and, per saved recipe,
+    one batch of spin-offs (parent_recipe_id is that recipe's id).
+    """
 
     __tablename__ = "suggestion"
 
     id: int | None = Field(default=None, primary_key=True)
     recipe_json: dict = Field(sa_column=Column(JSON, nullable=False))
     created_at: datetime = Field(default_factory=utcnow)
+    parent_recipe_id: int | None = Field(default=None, foreign_key="saved_recipe.id")
+    # The saved recipe this card became, once saved or rated.
+    saved_recipe_id: int | None = Field(default=None, foreign_key="saved_recipe.id")
 
 
 class GenerationLog(SQLModel, table=True):
