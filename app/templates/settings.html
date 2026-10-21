@@ -12,7 +12,13 @@
 </section>
 
 <section class="card">
-  <h2>Usage</h2>
-  <p class="muted">Generation count, tokens and cost arrive with recipe generation in Phase 4.</p>
+  <h2>Usage this month</h2>
+  <dl class="stats">
+    <div><dt>Requests</dt><dd>{{ usage.calls }}{% if usage.failed %} <span class="muted">({{ usage.failed }} failed)</span>{% endif %}</dd></div>
+    <div><dt>Input tokens</dt><dd>{{ "{:,}".format(usage.input_tokens) }}</dd></div>
+    <div><dt>Output tokens</dt><dd>{{ "{:,}".format(usage.output_tokens) }}</dd></div>
+    <div><dt>Estimated cost</dt><dd>${{ "%.2f"|format(usage.cost) if usage.cost >= 0.01 or not usage.cost else "%.4f"|format(usage.cost) }}</dd></div>
+  </dl>
+  <p class="hint">Every API call counts, including retries. Model: {{ model }}. Limit: {{ hourly_limit }} requests an hour.</p>
 </section>
 {% endblock %}

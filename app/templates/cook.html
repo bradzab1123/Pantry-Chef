@@ -1,7 +1,81 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="card">
-  <h2>What should we cook?</h2>
-  <p class="muted">Recipe suggestions arrive in Phase 4. For now this is the app skeleton.</p>
-</section>
+{# Generating takes a while, so: the indicator shows while the request runs,
+   and the button is disabled so a second tap can't start a second request. #}
+<form class="card cook-form" method="post" action="/cook/generate"
+      hx-post="/cook/generate" hx-target="#results" hx-swap="outerHTML"
+      hx-indicator="#generating" hx-disabled-elt="find button[type=submit]">
+
+  <fieldset class="choice-group">
+    <legend class="field-label">Who's eating</legend>
+    <div class="segmented">
+      {% for p in people %}
+        <label>
+          {# Changing who's eating swaps in their restriction chips. #}
+          <input type="radio" name="eaters" value="{{ p.id }}"
+                 hx-get="/cook/chips" hx-target="#chips" hx-swap="outerHTML"
+                 {% if form.eaters == p.id|string %}checked{% endif %}>
+          <span>{{ p.name }}</span>
+        </label>
+      {% endfor %}
+      <label>
+        <input type="radio" name="eaters" value="both"
+               hx-get="/cook/chips" hx-target="#chips" hx-swap="outerHTML"
+               {% if form.eaters == "both" %}checked{% endif %}>
+        <span>Both</span>
+      </label>
+    </div>
+  </fieldset>
+
+  <span class="field-label">Restrictions</span>
+  {% with avoid_on = form.avoid_on %}{% include "partials/cook_chips.html" %}{% endwith %}
+
+  <label for="skip" class="field-label">Skip tonight</label>
+  <input id="skip" name="skip" value="{{ form.skip }}" maxlength="300" autocomplete="off"
+         placeholder="e.g. no pasta, had it yesterday">
+
+  <div class="option-grid">
+    <div>
+      <label for="meal_type" class="field-label">Meal</label>
+      <select id="meal_type" name="meal_type">
+        {% for m in meal_types %}
+          <option value="{{ m }}" {% if form.meal_type == m %}selected{% endif %}>{{ m|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="max_time" class="field-label">Max time</label>
+      <select id="max_time" name="max_time">
+        {% for t in max_times %}
+          <option value="{{ t }}" {% if form.max_time == t %}selected{% endif %}>
+            {{ "Any" if t == "any" else t ~ " min" }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="servings" class="field-label">Servings</label>
+      <input id="servings" name="servings" type="number" inputmode="numeric"
+             min="1" max="{{ max_servings }}" value="{{ form.servings }}">
+    </div>
+    <div>
+      <label for="count" class="field-label">Recipes</label>
+      <select id="count" name="count">
+        {% for n in range(1, max_count + 1) %}
+          <option value="{{ n }}" {% if form.count == n %}selected{% endif %}>{{ n }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <label for="cuisine" class="field-label">Cuisine <span class="muted">(optional)</span></label>
+  <input id="cuisine" name="cuisine" value="{{ form.cuisine }}" maxlength="60" autocomplete="off"
+         placeholder="e.g. Thai, Mexican, comfort food">
+
+  <button type="submit" class="primary wide">Suggest recipes</button>
+  <p id="generating" class="htmx-indicator generating" role="status">
+    <span class="spinner" aria-hidden="true"></span> Cooking up ideas… this can take 20–30 seconds.
+  </p>
+</form>
+
+{% include "partials/cook_results.html" %}
 {% endblock %}

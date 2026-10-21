@@ -96,6 +96,16 @@ class ShoppingItem(SQLModel, table=True):
     source: str  # one of SHOPPING_SOURCES
 
 
+class Suggestion(SQLModel, table=True):
+    """One recipe from the latest generation (the whole batch is replaced each time)."""
+
+    __tablename__ = "suggestion"
+
+    id: int | None = Field(default=None, primary_key=True)
+    recipe_json: dict = Field(sa_column=Column(JSON, nullable=False))
+    created_at: datetime = Field(default_factory=utcnow)
+
+
 class GenerationLog(SQLModel, table=True):
     __tablename__ = "generation_log"
 

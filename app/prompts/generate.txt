@@ -1,0 +1,54 @@
+{#- The user message for a normal generation. Rendered by app/llm.py with the
+    context from app/cook.py (prompt_context). Block tags go on their own
+    lines: the environment trims the newline after each one. -#}
+Suggest {{ count }} recipe{{ "s" if count != 1 else "" }}.
+
+Who's eating: {{ eaters | join(" and ") }}
+
+Pantry (have or buying):
+{% for item in pantry %}
+- {{ item }}
+{% else %}
+- (empty)
+{% endfor %}
+
+Staples (always on hand):
+{% for item in staples %}
+- {{ item }}
+{% else %}
+- (none)
+{% endfor %}
+
+Never (absolute):
+{% for r in never %}
+- {{ r.term }}{{ " (also: " ~ r.aliases | join(", ") ~ ")" if r.aliases else "" }}{{ " (fine: " ~ r.exceptions | join(", ") ~ ")" if r.exceptions else "" }}
+{% else %}
+- (none)
+{% endfor %}
+
+Avoid:
+{% for term in avoid %}
+- {{ term }}
+{% else %}
+- (none)
+{% endfor %}
+
+Skip tonight: {{ skip or "(nothing)" }}
+Meal type: {{ meal_type }}
+Max total time: {{ max_time }}
+Servings: {{ servings }}
+Cuisine: {{ cuisine or "any" }}
+{% if liked %}
+
+Recipes we liked:
+{% for title in liked %}
+- {{ title }}
+{% endfor %}
+{% endif %}
+{% if disliked %}
+
+Recipes we didn't like:
+{% for title in disliked %}
+- {{ title }}
+{% endfor %}
+{% endif %}

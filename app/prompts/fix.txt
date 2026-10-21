@@ -1,0 +1,11 @@
+{#- Appended to the generate prompt for the one regenerate attempt. -#}
+
+Some recipes from an earlier attempt broke the rules and were rejected:
+{% for title, problem in problems %}
+- "{{ title }}": {{ problem }}
+{% endfor %}
+
+Suggest exactly {{ count }} new recipe{{ "s" if count != 1 else "" }} to replace {{ "them" if count != 1 else "it" }}, following every rule above.
+{% if keep_titles %}
+They must be different from these, which we're keeping: {{ keep_titles | join("; ") }}.
+{% endif %}

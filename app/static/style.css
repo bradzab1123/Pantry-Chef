@@ -324,3 +324,133 @@ button.switch::after {
 }
 button.switch[aria-checked="true"] { background: var(--accent); }
 button.switch[aria-checked="true"]::after { transform: translateX(20px); }
+
+/* ---------- Cook: form ---------- */
+
+.choice-group { border: 0; margin: 0; padding: 0; min-width: 0; }
+.choice-group .field-label { margin-top: 0; padding: 0; }
+
+/* Who's eating: radio buttons drawn as one segmented control. */
+.segmented {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.segmented label { flex: 1; min-width: 0; }
+.segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.segmented span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 0 8px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.segmented label + label span { border-left: 1px solid var(--border); }
+.segmented input:checked + span { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+.segmented input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -4px; }
+
+#chips .chips { margin-top: 2px; }
+.chips-hint { margin: 8px 0 0; }
+
+.chip-never, .chip-avoid {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.chip-never { background: var(--danger); color: var(--surface); font-weight: 600; }
+.lock { width: 14px; height: 14px; }
+
+/* Avoid chips are checkboxes; unchecked = allowed tonight (struck through). */
+.chip-avoid { background: var(--warn-soft); color: var(--warn); cursor: pointer; }
+.chip-avoid input { position: absolute; opacity: 0; pointer-events: none; }
+.chip-avoid:has(input:not(:checked)) {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.chip-avoid:has(input:focus-visible) { outline: 2px solid var(--accent); }
+
+.option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+
+button.wide { width: 100%; margin-top: 16px; }
+button[disabled] { opacity: 0.6; cursor: progress; }
+
+/* Shown only while the generate request is running (htmx adds .htmx-request). */
+.htmx-indicator.generating { display: none; }
+.htmx-indicator.generating.htmx-request {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+.spinner {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Cook: recipe cards ---------- */
+
+.empty-results { text-align: center; margin: 24px 0; }
+#results > .error, #results > .warning { margin: 0 0 14px; }
+
+.recipe-title { font-size: 1.2rem; margin-bottom: 2px; }
+.recipe-meta { color: var(--muted); font-size: 0.9rem; margin: 0 0 8px; }
+.recipe-summary { margin: 0 0 10px; }
+
+.need-to-buy {
+  background: var(--warn-soft);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin: 0 0 8px;
+}
+.need-to-buy.nothing { background: var(--accent-soft); }
+.diet-notes { margin: 0; }
+
+.recipe-details { margin-top: 10px; border-top: 1px solid var(--border); }
+.recipe-details summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+.recipe-details h3:first-of-type { margin-top: 4px; }
+.ingredients, .steps { margin: 0; padding-left: 22px; }
+.ingredients li, .steps li { margin: 4px 0; }
+.steps li { padding-left: 4px; }
+
+.tag {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+  vertical-align: 1px;
+}
+.tag-buy { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
+
+/* ---------- Settings: usage ---------- */
+
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 10px; }
+.stats div { background: var(--bg); border-radius: 10px; padding: 8px 12px; }
+.stats dt { color: var(--muted); font-size: 0.85rem; }
+.stats dd { margin: 0; font-size: 1.1rem; font-weight: 600; }

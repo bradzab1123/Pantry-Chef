@@ -1,0 +1,14 @@
+{# The results area under the Cook form. Needs: suggestions, notes, error. #}
+<section id="results" aria-live="polite">
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% for note in notes %}<p class="warning" role="status">{{ note }}</p>{% endfor %}
+
+  {% for s in suggestions %}
+    {% set recipe = s.recipe_json %}
+    {% include "partials/recipe_card.html" %}
+  {% else %}
+    {% if not error and not notes %}
+      <p class="muted empty-results">Pick who's eating and tap <strong>Suggest recipes</strong>.</p>
+    {% endif %}
+  {% endfor %}
+</section>

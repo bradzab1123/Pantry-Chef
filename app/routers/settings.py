@@ -1,4 +1,4 @@
-"""Settings page: people's names, restrictions, and staples.
+"""Settings page: people's names, restrictions, staples, and API usage.
 
 Safety rules for restrictions (the `never` level feeds the recipe filter):
 - A `never` restriction is always active. Only `avoid` ones can be switched off.
@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from sqlmodel import Session, select
 
+from app import config, llm
 from app.db import get_session
 from app.models import LEVELS, Person, Restriction, Staple
 from app.pantry import normalize_name, split_items, split_terms
@@ -97,6 +98,8 @@ def settings_page(request: Request, session: Session = Depends(get_session)):
         request, "settings.html", "settings", title="Settings",
         people=[(p, restrictions_for(session, p.id)) for p in people],
         staples=all_staples(session), form=form_values(),
+        usage=llm.usage_this_month(session), model=config.CLAUDE_MODEL,
+        hourly_limit=config.MAX_GENERATIONS_PER_HOUR,
     )
 
 

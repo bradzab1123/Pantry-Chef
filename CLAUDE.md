@@ -28,13 +28,16 @@ Pantry Chef: a self-hosted PWA that suggests recipes from our pantry while respe
 - HTMX forms also carry `method`/`action`: routes return a partial when `is_htmx(request)`, else a 303 redirect. HTMX won't swap 4xx responses, so validation errors come back as 200 with the error in the form.
 - `never` restrictions are always `active`; only `avoid` can be toggled off. Downgrading `never` → `avoid` needs a second, confirming save.
 - Timestamps: use `models.utcnow()` (aware UTC); SQLModel rejects naive datetimes.
+- Generation: `cook.generate()` loads `never` rules from the DB (never from the form), runs `cook.review()` on every recipe before tidying it, regenerates once, then drops. The `suggestion` table holds only the latest batch; later phases copy from it by id.
+- LLM calls go through `llm.request_recipes()` (structured output via `output_config.format`, one validation retry, every call logged). Tests use the `fake_llm` fixture; an autouse fixture makes un-faked calls fail.
 
 ## Layout (target)
 ```
 app/
   main.py          # FastAPI app: wires routers, simple pages, /health, /sw.js
   web.py           # templates, tab bar, render/render_partial, is_htmx, redirect
-  routers/         # one APIRouter per page (pantry.py, settings.py, ...)
+  routers/         # one APIRouter per page (cook.py, pantry.py, settings.py, ...)
+  cook.py          # Cook tab: form parsing, prompt context, review/filter, regenerate-once
   pantry.py        # name cleaning, plural-folding normalize_name, bulk add
   db.py            # engine, session, migrations
   models.py        # DB models
