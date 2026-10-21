@@ -21,6 +21,8 @@ Pantry Chef: a self-hosted PWA that suggests recipes from our pantry while respe
 - Tests: `pytest`
 - Docker: `docker compose up --build` (needs `.env` and the external `TUNNEL_NETWORK` network; locally: `docker network create cloudflared`)
 - Regenerate icons: `python scripts/make_icons.py`
+- CI: `.github/workflows/ci.yml` runs pytest on PRs and pushes to `main`; on `main` it then pushes `ghcr.io/<owner>/pantry-chef:latest` and `:sha-<short>`
+- Server update: `docker compose pull && docker compose up -d` (roll back with `IMAGE_TAG=sha-...` in `.env`). Deploy, Cloudflare and backup steps are in README.md.
 
 ## Conventions
 - Schema changes: add a new `app/migrations/NNNN_*.sql` file (never edit a shipped one) and update `app/models.py`; `test_schema_matches_models` keeps them in sync.
@@ -53,5 +55,6 @@ app/
   templates/       # Jinja2 + HTMX
   static/          # css, icons, manifest, service worker
 tests/
+.github/workflows/ci.yml  # test, then build + push to GHCR
 data/              # SQLite (git-ignored)
 ```

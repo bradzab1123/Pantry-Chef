@@ -2,11 +2,14 @@
 # No ports are published: cloudflared reaches the app over the shared Docker
 # network at http://pantry-chef:8000, and Cloudflare Access handles login.
 #
-# GHCR_USER and TUNNEL_NETWORK come from .env (see .env.example).
+# GHCR_USER, TUNNEL_NETWORK and (optionally) IMAGE_TAG come from .env
+# (see .env.example). Deploy and update steps are in README.md.
 
 services:
   pantry-chef:
-    image: ghcr.io/${GHCR_USER:-your-github-user}/pantry-chef:latest
+    image: ghcr.io/${GHCR_USER:-your-github-user}/pantry-chef:${IMAGE_TAG:-latest}
+    # Only used by `docker compose up --build` on a dev machine. The server
+    # just runs `docker compose pull` to fetch the image CI built.
     build: .
     container_name: pantry-chef
     env_file: .env
