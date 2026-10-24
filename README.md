@@ -1,6 +1,58 @@
 # Pantry Chef
 
-A self-hosted, mobile-first PWA that suggests recipes from what's in the pantry while respecting each person's dietary restrictions. See [SPEC.md](SPEC.md) for the full spec.
+[![CI](https://github.com/bradzab1123/pantry-chef/actions/workflows/ci.yml/badge.svg)](https://github.com/bradzab1123/pantry-chef/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)
+
+A self-hosted, mobile-first recipe planner for a two-person household. Tell it what's in the pantry and what you're about to buy, and Claude suggests recipes that respect each person's dietary restrictions. The extra ingredients a recipe needs go straight onto a shopping list.
+
+<p align="center">
+  <img src="docs/screenshots/hero.png" alt="Pantry Chef on a phone: the Cook form, recipe suggestions, the pantry and this week's shopping list">
+</p>
+
+## Features
+
+- **Recipes from what you have.** Suggestions use your pantry and staples, plus at most two things to buy.
+- **Restrictions per person.** Pick who's eating and only their restrictions apply. Each one is either *never* (enforced) or *avoid* (a preference you can switch off for a single request).
+- **A safety filter that doesn't trust the model.** Every recipe is checked in code against each *never* item, its aliases (e.g. "XO sauce" for shrimp) and exceptions (e.g. "cornstarch" is fine for corn), with word-boundary and plural matching. A recipe that fails gets one regenerate, then it's dropped.
+- **Saved recipes and ratings.** Thumbs up and down steer future suggestions. "Spin-offs" make variations of a recipe you liked.
+- **This week's plan and a shopping list.** Missing ingredients are merged into one list; checking an item off moves it into the pantry.
+- **Installs like an app.** A PWA for the iPhone home screen, with a light and dark theme.
+- **Small and cheap to run.** One container, SQLite, no JS framework or build step. A monthly usage and cost estimate is in Settings, and an hourly cap guards against runaway spend.
+
+<p align="center">
+  <img src="docs/screenshots/saved.png" width="260" alt="A saved recipe with ingredients and numbered steps">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/settings.png" width="260" alt="Settings: each person's restrictions">
+</p>
+
+## How it works
+
+| Part | What it uses |
+|---|---|
+| Web app | [FastAPI](https://fastapi.tiangolo.com/), Jinja2 templates and [htmx](https://htmx.org/) (every form also works without JavaScript) |
+| Data | SQLite through [SQLModel](https://sqlmodel.tiangolo.com/), with plain numbered SQL migrations |
+| Recipes | The [Claude API](https://docs.anthropic.com/) with structured output, validated by Pydantic ([`app/llm.py`](app/llm.py)) |
+| Never filter | [`app/restrictions.py`](app/restrictions.py), run on every recipe by [`app/cook.py`](app/cook.py) |
+| Hosting | A Docker image built by GitHub Actions, served through Cloudflare Tunnel and Cloudflare Access |
+
+The app has no accounts of its own. It's meant to sit behind Cloudflare Access (or another login proxy), with one shared household for the two people. [SPEC.md](SPEC.md) has the full design.
+
+## Quick start
+
+```bash
+git clone https://github.com/bradzab1123/pantry-chef.git
+cd pantry-chef
+python -m venv .venv
+.venv/Scripts/activate        # Windows (Git Bash); on Linux/macOS: source .venv/bin/activate
+pip install -r requirements-dev.txt
+export ANTHROPIC_API_KEY=sk-ant-...   # only needed to generate recipes
+uvicorn app.main:app --reload
+```
+
+Open http://localhost:8000. The first visit asks for the two people's names, then takes you to Settings to add each person's restrictions.
+
+## Contents
 
 - [Local development](#local-development)
 - [CI/CD](#cicd)
@@ -9,19 +61,26 @@ A self-hosted, mobile-first PWA that suggests recipes from what's in the pantry 
 - [Updating](#updating)
 - [Backups](#backups)
 - [Project notes](#project-notes)
+- [License](#license)
 
 ## Local development
 
-Needs Python 3.11+ (the container and CI use 3.12).
+Needs Python 3.11+ (the container and CI use 3.12). Set up as in [Quick start](#quick-start).
 
-```bash
-python -m venv .venv
-.venv/Scripts/activate        # Windows (Git Bash); on Linux/macOS: source .venv/bin/activate
-pip install -r requirements-dev.txt
-uvicorn app.main:app --reload
-```
+The SQLite database is created at `data/pantry.db` and migrated automatically on startup. Recipe generation needs `ANTHROPIC_API_KEY` set in your environment; everything else works without it.
 
-Open http://localhost:8000. The SQLite database is created at `data/pantry.db` and migrated automatically on startup. Recipe generation needs `ANTHROPIC_API_KEY` set in your environment; everything else works without it.
+### Configuration
+
+The app reads these environment variables (in Docker, from `.env`; see [`.env.example`](.env.example)):
+
+| Variable | Default | What it does |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | (none) | Your Claude API key, from [console.anthropic.com](https://console.anthropic.com/) |
+| `CLAUDE_MODEL` | `claude-haiku-5-5` | Model used for recipes |
+| `MAX_GENERATIONS_PER_HOUR` | `30` | Cost guard: requests beyond this in a rolling hour are refused |
+| `PRICE_INPUT_PER_MTOK`, `PRICE_OUTPUT_PER_MTOK` | `0.10`, `0.50` | US$ per million tokens, for the cost estimate in Settings |
+| `DB_PATH` | `data/pantry.db` | Where the SQLite file lives |
+| `TZ` | (system) | Time zone; the monthly usage in Settings resets at local midnight on the 1st |
 
 ### Tests
 
@@ -123,7 +182,7 @@ docker compose ps        # STATUS should say "(healthy)" after ~30 s
 docker compose logs -f   # Ctrl+C to stop following
 ```
 
-The database is created and migrated on first start, at `/opt/pantry-chef/data/pantry.db`.
+The database is created and migrated on first start, at `/opt/pantry-chef/data/pantry.db`. The first visit to the app asks for the two people's names; after that, add each person's restrictions in Settings.
 
 ## Cloudflare Tunnel and Access
 
@@ -253,3 +312,8 @@ docker compose start
 - **Migrations:** numbered SQL files in `app/migrations/`, applied in order at startup and tracked in `schema_version`. To change the schema, add a new file with the next number. Never edit a file that has already run on the server. Also update `app/models.py`; a test checks that the two match.
 - **Icons:** `python scripts/make_icons.py` redraws the PNGs in `app/static/icons/`.
 - **htmx** is vendored at `app/static/htmx.min.js` (v2.0.4).
+- **Screenshots** in `docs/screenshots/` were taken from a local install with sample data.
+
+## License
+
+[MIT](LICENSE)

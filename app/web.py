@@ -6,9 +6,12 @@ from fastapi import Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from app.schemas import strip_step_number
+
 APP_DIR = Path(__file__).resolve().parent
 
 templates = Jinja2Templates(directory=APP_DIR / "templates")
+templates.env.filters["strip_step_number"] = strip_step_number
 
 # Bottom tab bar, in display order: (key, label, url).
 TABS = [

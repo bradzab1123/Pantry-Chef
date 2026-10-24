@@ -1,6 +1,6 @@
 """Phase 3 tests: the `never` restriction filter (app/restrictions.py).
 
-This filter is safety-relevant (Crohn's triggers, shellfish). If one of these
+This filter is safety-relevant (medical triggers, allergies). If one of these
 tests fails, fix the matcher, never the test. When in doubt the matcher
 should flag a recipe; a false alarm costs one regenerated recipe, a miss
 costs a bad night.
@@ -87,8 +87,7 @@ def test_popcorn_needs_the_alias():
     assert not flagged("popcorn", bare)
 
 
-def test_seeded_corn_restriction_catches_popcorn(db_file):
-    db.migrate()
+def test_household_corn_restriction_catches_popcorn(household):
     with Session(db.get_engine()) as session:
         corn = session.exec(select(Restriction).where(Restriction.term == "corn")).one()
         assert flagged("caramel popcorn", corn)
@@ -388,8 +387,7 @@ def test_violation_message_empty():
 
 
 @pytest.fixture
-def session(db_file):
-    db.migrate()
+def session(household):
     with Session(db.get_engine()) as s:
         yield s
 
@@ -403,22 +401,22 @@ def terms(rows):
 
 
 def test_never_restrictions_for_each_person(session):
-    brad, partner = person_id(session, "Brad"), person_id(session, "Partner")
-    assert terms(never_restrictions_for(session, [brad])) == ["shrimp"]
-    assert terms(never_restrictions_for(session, [partner])) == ["broccoli", "corn"]
-    assert terms(never_restrictions_for(session, [brad, partner])) == ["broccoli", "corn", "shrimp"]
+    alex, jordan = person_id(session, "Alex"), person_id(session, "Jordan")
+    assert terms(never_restrictions_for(session, [alex])) == ["shrimp"]
+    assert terms(never_restrictions_for(session, [jordan])) == ["broccoli", "corn"]
+    assert terms(never_restrictions_for(session, [alex, jordan])) == ["broccoli", "corn", "shrimp"]
     assert never_restrictions_for(session, []) == []
 
 
 def test_never_restrictions_skip_avoid_rows(session):
-    brad = person_id(session, "Brad")
-    rows = never_restrictions_for(session, [brad])
+    alex = person_id(session, "Alex")
+    rows = never_restrictions_for(session, [alex])
     assert all(r.level == "never" for r in rows)
     assert "fish" not in terms(rows)
 
 
 def test_seeded_restrictions_end_to_end(session):
-    both = never_restrictions_for(session, [person_id(session, "Brad"), person_id(session, "Partner")])
+    both = never_restrictions_for(session, [person_id(session, "Alex"), person_id(session, "Jordan")])
     bad = recipe(title="Shrimp Fried Rice", steps=["Thicken with corn starch.", "Add popcorn."])
     assert [(v.term, v.matched, v.where) for v in check_recipe(bad, both)] == [
         ("shrimp", "shrimp", "title"),

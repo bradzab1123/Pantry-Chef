@@ -43,7 +43,7 @@ def save_restriction(client, r, **fields):
 
 def test_settings_page_shows_seeded_data(client):
     html = client.get("/settings").text
-    for text in ["Brad", "Partner", "shrimp", "XO sauce", "broccoli", "cornstarch", "olive oil"]:
+    for text in ["Alex", "Jordan", "shrimp", "XO sauce", "broccoli", "cornstarch", "olive oil"]:
         assert text in html
 
 
@@ -68,12 +68,12 @@ def test_rename_person(client):
 def test_blank_name_rejected(client):
     response = client.post("/settings/people/2", data={"name": "   "}, headers=HTMX)
     assert "can&#39;t be empty" in response.text  # apostrophe is HTML-escaped
-    assert get_person(2).name == "Partner"
+    assert get_person(2).name == "Jordan"
 
 
 def test_too_long_name_rejected(client):
     client.post("/settings/people/2", data={"name": "x" * 41}, headers=HTMX)
-    assert get_person(2).name == "Partner"
+    assert get_person(2).name == "Jordan"
 
 
 def test_rename_unknown_person_404(client):

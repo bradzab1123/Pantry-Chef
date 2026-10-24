@@ -13,7 +13,7 @@ from sqlmodel import Session, select
 
 from app import config, cook, db, llm
 from app.models import GenerationLog, PantryItem, Restriction, Staple, Suggestion, utcnow
-from app.schemas import Recipe
+from app.schemas import Recipe, strip_step_number
 
 HTMX = {"HX-Request": "true"}
 REMOVED_RESTRICTED = "1 recipe removed for containing a restricted ingredient."
@@ -116,6 +116,29 @@ def test_request_uses_structured_output(client, fake_llm):
     assert "temperature" not in call and "tool_choice" not in call
 
 
+@pytest.mark.parametrize("step,expected", [
+    ("1. Preheat the oven.", "Preheat the oven."),
+    ("  2) Chop the onion.", "Chop the onion."),
+    ("Step 3: Simmer.", "Simmer."),
+    ("4 - Serve.", "Serve."),
+    ("1.5 cups of stock go in next.", "1.5 cups of stock go in next."),  # a quantity, not a number
+    ("2 eggs, beaten, go in last.", "2 eggs, beaten, go in last."),
+    ("Bake for 20 minutes.", "Bake for 20 minutes."),
+])
+def test_strip_step_number(step, expected):
+    assert strip_step_number(step) == expected
+
+
+def test_numbered_steps_are_shown_once(client, fake_llm):
+    """The model sometimes numbers its steps; the page's list numbers them too."""
+    fake_llm.reply([recipe(steps=["1. Preheat the oven.", "2. Roast the chicken."])])
+    html = generate(client).text
+    assert "<li>Preheat the oven.</li>" in html
+    with session() as s:
+        [row] = s.exec(select(Suggestion)).all()
+    assert row.recipe_json["steps"] == ["Preheat the oven.", "Roast the chicken."]
+
+
 def test_need_to_buy_shown(client, fake_llm):
     fake_llm.reply([recipe(ingredients=[("chicken", "pantry"), ("basil", "buy")], missing=["basil"])])
     html = generate(client).text
@@ -171,7 +194,7 @@ def test_prompt_includes_pantry_staples_and_restrictions(client, fake_llm):
     assert "Avoid:\n- fish" in prompt
     assert "Skip tonight: no pasta" in prompt
     assert "Cuisine: Thai" in prompt
-    assert "Who's eating: Brad and Partner" in prompt
+    assert "Who's eating: Alex and Jordan" in prompt
 
 
 def test_never_restrictions_sent_even_when_form_has_none(client, fake_llm):
@@ -189,12 +212,12 @@ def test_avoid_toggled_off_is_not_sent(client, fake_llm):
     assert "Avoid:\n- (none)" in fake_llm.prompt()
 
 
-def test_partner_only_leaves_out_brads_restrictions(client, fake_llm):
+def test_partner_only_leaves_out_alexs_restrictions(client, fake_llm):
     fake_llm.reply([recipe()])
     generate(client, eaters="2", avoid=[str(restriction_id("fish"))])
     prompt = fake_llm.prompt()
-    assert "Who's eating: Partner" in prompt
-    assert "shrimp" not in prompt and "fish" not in prompt  # Brad's, and he isn't eating
+    assert "Who's eating: Jordan" in prompt
+    assert "shrimp" not in prompt and "fish" not in prompt  # Alex's, and they aren't eating
     assert "- broccoli" in prompt and "- corn" in prompt
 
 
@@ -265,7 +288,7 @@ def test_avoid_items_are_not_filtered(client, fake_llm):
 
 def test_filter_uses_only_the_people_eating(client, fake_llm):
     fake_llm.reply([SHRIMP_RECIPE])
-    generate(client, eaters="2")  # Partner only; shrimp is Brad's restriction
+    generate(client, eaters="2")  # Jordan only; shrimp is Alex's restriction
     assert suggestion_titles() == ["Garlic Noodles"]
 
 
@@ -477,7 +500,7 @@ def test_chips_follow_who_is_eating(client):
 def test_cook_page_renders_form(client):
     html = client.get("/").text
     assert 'hx-post="/cook/generate"' in html
-    assert 'value="both"' in html and "Brad" in html and "Partner" in html
+    assert 'value="both"' in html and "Alex" in html and "Jordan" in html
     assert "shrimp" in html  # Both is the default, so all chips show
 
 
@@ -504,10 +527,9 @@ def test_parse_form_clamps_and_defaults():
 # ---------- review() directly ----------
 
 
-def test_review_checks_the_recipe_before_tidying(db_file):
+def test_review_checks_the_recipe_before_tidying(household):
     """Even if the only mention of a never item is in a "buy" entry that
     tidying would remove (because it's in the pantry), it's still caught."""
-    db.migrate()
     add_pantry("corn")
     with session() as s:
         never = cook.never_restrictions_for(s, [1, 2])

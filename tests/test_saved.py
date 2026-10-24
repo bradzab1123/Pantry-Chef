@@ -273,7 +273,7 @@ def test_heads_up_when_a_later_never_rule_matches(client):
     # One heads-up per restriction, listing everything it matched.
     assert detail.count("Heads up:") == 1
     assert "Heads up: contains “pea”, “peas”" in detail
-    assert "for Partner (pea)" in detail
+    assert "for Jordan (pea)" in detail
 
 
 def test_avoid_rules_do_not_raise_a_heads_up(client):
@@ -321,9 +321,9 @@ def test_spinoff_prompt_has_the_original_and_everyones_restrictions(client, fake
     assert "- 1 chicken thighs" in prompt
     assert "2. Roast it." in prompt
     assert "the protein, the cuisine, or the cooking method" in prompt
-    assert "Who's eating: Brad and Partner" in prompt
-    assert "- shrimp (also: prawn" in prompt                        # Brad's never
-    assert "- corn (also: popcorn) (fine: cornstarch" in prompt     # Partner's never
+    assert "Who's eating: Alex and Jordan" in prompt
+    assert "- shrimp (also: prawn" in prompt                        # Alex's never
+    assert "- corn (also: popcorn) (fine: cornstarch" in prompt     # Jordan's never
     assert "- broccoli (also: broccolini)" in prompt
     assert "Avoid:\n- fish" in prompt
     assert "unless the request asks for variations" in fake_llm.calls[0]["system"]
@@ -398,9 +398,9 @@ def test_spinoff_violation_is_replaced(client, fake_llm):
 
 
 @pytest.mark.parametrize("bad", [
-    SHRIMP_RECIPE,                                                      # Brad's never
-    recipe("Broccoli Stir-Fry"),                                        # Partner's never
-    recipe(steps=["Thicken with cornstarch.", "Add the corn kernels."]),  # Partner's, past an exception
+    SHRIMP_RECIPE,                                                      # Alex's never
+    recipe("Broccoli Stir-Fry"),                                        # Jordan's never
+    recipe(steps=["Thicken with cornstarch.", "Add the corn kernels."]),  # Jordan's, past an exception
     recipe(ingredients=[("chicken thighs, or shrimp if you like", "pantry")]),  # hidden by a prep note
 ])
 def test_spinoffs_always_use_everyones_never_rules(client, fake_llm, bad):

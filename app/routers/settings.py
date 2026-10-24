@@ -48,6 +48,18 @@ def clean_text(text: str) -> str:
     return " ".join(text.split())
 
 
+def name_error(name: str, other_names: list[str]) -> str:
+    """What's wrong with a person's (cleaned) name, or "" if it's fine.
+    Names must differ so "Who's eating" is never ambiguous."""
+    if not name:
+        return "Name can't be empty."
+    if len(name) > MAX_NAME_LENGTH:
+        return f"Keep it under {MAX_NAME_LENGTH} characters."
+    if name.lower() in (n.lower() for n in other_names):
+        return "The two names need to be different."
+    return ""
+
+
 def restriction_error(session: Session, person_id: int, term: str, level: str,
                       exclude_id: int | None = None) -> str:
     """Return a message describing what's wrong, or "" if the values are fine."""
@@ -111,12 +123,9 @@ def rename_person(person_id: int, request: Request, name: str = Form(""),
                   session: Session = Depends(get_session)):
     person = get_or_404(session, Person, person_id)
     name = clean_text(name)
-    error = ""
-    if not name:
-        error = "Name can't be empty."
-    elif len(name) > MAX_NAME_LENGTH:
-        error = f"Keep it under {MAX_NAME_LENGTH} characters."
-    else:
+    others = session.exec(select(Person.name).where(Person.id != person.id)).all()
+    error = name_error(name, others)
+    if not error:
         person.name = name
         session.add(person)
         session.commit()

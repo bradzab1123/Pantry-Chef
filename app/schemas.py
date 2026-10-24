@@ -13,11 +13,22 @@ Notes:
   checks it per recipe and asks for a replacement (like a `never` violation).
 """
 
+import re
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 MAX_MISSING = 2
+
+# A number the model put in front of a step ("1. ", "2) ", "Step 3: "). The
+# page shows steps in a numbered list already, so it would print "1. 1. ...".
+# The punctuation must be followed by a space, so "1.5 cups ..." is left alone.
+STEP_NUMBER = re.compile(r"^\s*(?:step\s*)?\d+\s*[.):\-–—]\s+", re.IGNORECASE)
+
+
+def strip_step_number(step: str) -> str:
+    """Drop a leading step number: "1. Preheat the oven." -> "Preheat the oven."."""
+    return STEP_NUMBER.sub("", step, count=1).strip()
 
 
 class Ingredient(BaseModel):
@@ -44,7 +55,7 @@ class Recipe(BaseModel):
     total_time_minutes: int
     difficulty: Literal["easy", "medium", "hard"]
     ingredients: list[Ingredient]
-    steps: list[str]
+    steps: list[str] = Field(description="One action or stage per step. Don't number them.")
     missing_ingredients: list[str] = Field(
         description=f"The names of the ingredients with source 'buy', exactly as written there. "
                     f"At most {MAX_MISSING}."
@@ -53,6 +64,11 @@ class Recipe(BaseModel):
     variation_note: str | None = Field(
         description="Spin-offs only: what changed vs. the original. Otherwise null."
     )
+
+    @field_validator("steps")
+    @classmethod
+    def _unnumber_steps(cls, steps: list[str]) -> list[str]:
+        return [strip_step_number(s) for s in steps]
 
 
 class RecipeResponse(BaseModel):

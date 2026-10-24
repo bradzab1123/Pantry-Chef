@@ -15,7 +15,7 @@ Restrictions
 
 Recipes
 - Realistic home cooking that works on a normal weeknight kitchen setup.
-- Clear, numbered-style steps (one action or stage per step) with US measurements.
+- Clear steps (one action or stage per step) with US measurements. Don't number the steps; the app numbers them.
 - Make the recipes in one request noticeably different from each other.
 - Respect the requested meal type, time limit, servings and cuisine. total_time_minutes includes prep.
 - Write everything (quantities and summary) for the requested number of servings.

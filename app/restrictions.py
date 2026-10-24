@@ -1,7 +1,7 @@
 """The `never` restriction filter (SPEC.md §1).
 
 Every generated or spin-off recipe is checked here before anyone sees it.
-This is safety-relevant (Crohn's triggers, shellfish), so the rules lean
+This is safety-relevant (medical triggers, allergies), so the rules lean
 toward flagging: a false alarm costs one regenerated recipe, a miss is worse.
 
 Matching rules, for each `never` restriction's term and each of its aliases:

@@ -71,42 +71,18 @@ def session(db_file):
         yield s
 
 
-def restrictions_for(session, person_name):
-    person = session.exec(select(models.Person).where(models.Person.name == person_name)).one()
-    return {
-        r.term: r
-        for r in session.exec(
-            select(models.Restriction).where(models.Restriction.person_id == person.id)
-        )
-    }
+def test_seed_people_start_unnamed(session):
+    """A new install has two people with no names yet (the setup screen asks)
+    and no restrictions."""
+    people = session.exec(select(models.Person).order_by(models.Person.id)).all()
+    assert [(p.id, p.name) for p in people] == [(1, ""), (2, "")]
+    assert session.exec(select(models.Restriction)).all() == []
 
 
-def test_seed_brad(session):
-    r = restrictions_for(session, "Brad")
-    assert r["shrimp"].level == "never"
-    assert r["shrimp"].aliases == [
-        "prawn", "prawns", "shrimp paste", "dried shrimp",
-        "shrimp stock", "XO sauce", "bagoong", "belacan",
-    ]
-    assert r["fish"].level == "avoid"
-    assert all(x.active for x in r.values())
-
-
-def test_seed_partner(session):
-    r = restrictions_for(session, "Partner")
-    assert r["broccoli"].level == "never"
-    assert r["broccoli"].aliases == ["broccolini"]
-    assert r["corn"].level == "never"
-    assert r["corn"].exceptions == ["cornstarch", "corn starch"]
-    assert r["corn"].aliases == ["popcorn"]  # added by 0003
-    assert "Crohn" in r["corn"].notes
-
-
-def test_popcorn_migration_never_duplicates(db_file):
+def test_popcorn_migration_never_duplicates(household):
     """Re-running 0003 (or running it after popcorn was added in Settings) is a no-op."""
-    db.migrate()
     sql = (db.MIGRATIONS_DIR / "0003_corn_popcorn_alias.sql").read_text(encoding="utf-8")
-    conn = sqlite3.connect(db_file)
+    conn = sqlite3.connect(household)
     try:
         conn.executescript(sql)
         aliases = conn.execute("SELECT aliases FROM restriction WHERE term = 'corn'").fetchone()[0]

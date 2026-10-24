@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+{# First-run setup. Needs: people, typed (person id -> name, after an error),
+   error, max_length. A plain form: it's posted once, so no HTMX needed. #}
+<form class="card setup" method="post" action="/setup">
+  <h2>Who's cooking?</h2>
+  <p class="hint">Pantry Chef plans meals for two people, each with their own dietary
+    restrictions. Enter both names to get started. You can change them later in Settings.</p>
+
+  {% for p in people %}
+    <label for="name-{{ p.id }}" class="field-label">Person {{ loop.index }}</label>
+    <input id="name-{{ p.id }}" name="name-{{ p.id }}" maxlength="{{ max_length }}" required
+           value="{{ typed.get(p.id, '') }}" autocomplete="off"
+           {% if loop.first %}autofocus{% endif %}>
+  {% endfor %}
+
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <div class="button-row">
+    <button type="submit" class="primary">Get started</button>
+  </div>
+</form>
+{% endblock %}

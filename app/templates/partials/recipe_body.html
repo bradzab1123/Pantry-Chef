@@ -1,4 +1,5 @@
-{# Ingredients and steps of one recipe. Needs: recipe (the recipe JSON). #}
+{# Ingredients and steps of one recipe. Needs: recipe (the recipe JSON).
+   strip_step_number also cleans recipes saved before Recipe did it on parse. #}
 <h3>Ingredients</h3>
 <ul class="ingredients">
   {% for i in recipe.ingredients %}
@@ -11,5 +12,5 @@
 </ul>
 <h3>Steps</h3>
 <ol class="steps">
-  {% for step in recipe.steps %}<li>{{ step }}</li>{% endfor %}
+  {% for step in recipe.steps %}<li>{{ step | strip_step_number }}</li>{% endfor %}
 </ol>

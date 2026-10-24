@@ -1,9 +1,10 @@
 -- Popcorn is corn, but whole-word matching won't find "corn" inside "popcorn"
 -- (on purpose: that's what keeps "acorn" and "peppercorn" from matching).
--- So add it as an alias on Partner's seeded corn restriction.
+-- So add it as an alias on the corn restriction the original seed gave person 2.
 --
--- Does nothing if corn was deleted or popcorn is already there, so it never
--- overwrites edits made in Settings.
+-- Does nothing if corn was deleted or popcorn is already there (or on a new
+-- install, which has no seeded restrictions), so it never overwrites edits
+-- made in Settings.
 
 UPDATE restriction
 SET aliases = json_insert(aliases, '$[#]', 'popcorn')

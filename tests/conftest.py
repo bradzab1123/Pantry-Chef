@@ -4,6 +4,8 @@ Every test gets its own fresh SQLite file in a temp folder, so tests never
 touch data/pantry.db and can't affect each other.
 """
 
+import sqlite3
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -20,10 +22,47 @@ def db_file(tmp_path, monkeypatch):
     db.reset_engine()
 
 
+# A new install starts with two unnamed people and no restrictions (see
+# 0002_seed.sql). Most tests want a household that's set up, with restrictions
+# that exercise the never filter, so this fills one in after migrating.
+HOUSEHOLD_SQL = """
+UPDATE person SET name = 'Alex' WHERE id = 1;
+UPDATE person SET name = 'Jordan' WHERE id = 2;
+INSERT INTO restriction (person_id, term, aliases, exceptions, level, notes) VALUES
+    (1, 'shrimp',
+        '["prawn", "prawns", "shrimp paste", "dried shrimp", "shrimp stock", "XO sauce", "bagoong", "belacan"]',
+        '[]', 'never', NULL),
+    (1, 'fish', '[]', '[]', 'avoid', NULL),
+    (2, 'broccoli', '["broccolini"]', '[]', 'never', 'Harder vegetable.'),
+    (2, 'corn', '["popcorn"]', '["cornstarch", "corn starch"]', 'never', 'Harder vegetable.');
+"""
+
+
 @pytest.fixture
-def client(db_file):
-    """A TestClient. Using it as a context manager runs the app's startup,
-    which applies migrations to the temp database."""
+def household(db_file):
+    """Migrate the temp database and fill in the test household."""
+    db.migrate()
+    conn = sqlite3.connect(db_file)
+    try:
+        conn.executescript(HOUSEHOLD_SQL)
+    finally:
+        conn.close()
+    return db_file
+
+
+@pytest.fixture
+def client(household):
+    """A TestClient for a set-up household. Using it as a context manager runs
+    the app's startup (migrations, already applied here, so a no-op)."""
+    from app.main import app
+
+    with TestClient(app) as c:
+        yield c
+
+
+@pytest.fixture
+def new_install_client(db_file):
+    """A TestClient on a brand-new install: nobody named yet."""
     from app.main import app
 
     with TestClient(app) as c:

@@ -1,18 +1,15 @@
--- Seed data from SPEC.md §1 and §2.1. Runs once; everything is editable in Settings.
+-- Seed data. Runs once on a new install; everything is editable in Settings.
+--
+-- The two people start without names: until both are named, every page sends
+-- you to the setup screen (app/routers/setup.py). Restrictions start empty, so
+-- each person adds their own in Settings.
+--
+-- This file was rewritten when the project went public. Databases that ran the
+-- earlier version keep the data it seeded, because migrations never re-run.
 
 INSERT INTO person (id, name) VALUES
-    (1, 'Brad'),
-    (2, 'Partner');
-
-INSERT INTO restriction (person_id, term, aliases, exceptions, level, notes) VALUES
-    (1, 'shrimp',
-        '["prawn", "prawns", "shrimp paste", "dried shrimp", "shrimp stock", "XO sauce", "bagoong", "belacan"]',
-        '[]', 'never', NULL),
-    (1, 'fish', '[]', '[]', 'avoid', NULL),
-    (2, 'broccoli', '["broccolini"]', '[]', 'never',
-        'Crohn''s trigger (harder vegetable). Seeded as never to be conservative.'),
-    (2, 'corn', '[]', '["cornstarch", "corn starch"]', 'never',
-        'Crohn''s trigger (harder vegetable). Seeded as never to be conservative.');
+    (1, ''),
+    (2, '');
 
 INSERT INTO staple (name) VALUES
     ('salt'), ('black pepper'), ('olive oil'), ('vegetable oil'), ('butter'),

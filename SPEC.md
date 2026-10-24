@@ -17,15 +17,20 @@ Each person has a list of restrictions. Each restriction has a **level**:
 | `never` | Must not appear in a recipe | Sent in the prompt **and** enforced by a code-level filter on the returned recipe |
 | `avoid` | Dislike / prefer not | Sent in the prompt only |
 
-### Seed data (editable in Settings)
+### First run
 
-- **Brad**
+A new install has two unnamed people and no restrictions. Until both are named, every page goes to a **setup screen** that asks for the two names; after that it hands off to Settings to add restrictions. Names stay editable in Settings and must differ from each other.
+
+### Example restrictions
+
+These are used throughout this spec and the tests (they're not seeded):
+
+- Person 1
   - `never`: shrimp — aliases: prawn, prawns, shrimp paste, dried shrimp, shrimp stock, XO sauce, bagoong, belacan
   - `avoid`: fish
-- **Partner** (display name editable; she'll fill in her real list)
+- Person 2
   - `never`: broccoli — aliases: broccolini
-  - `never`: corn — exceptions: cornstarch, corn starch
-  - Note: these are Crohn's triggers (harder vegetables). Seeded as `never` to be conservative; she can change levels or add items.
+  - `never`: corn — aliases: popcorn; exceptions: cornstarch, corn starch
 
 ### Restriction fields
 - `term` (e.g. "corn")
@@ -55,7 +60,7 @@ After every generation, check each recipe's title, ingredient names and step tex
 
 ### 2.2 Generate recipes (main screen)
 Inputs:
-- **Who's eating**: Brad / Partner / Both (default Both). Only restrictions for the people eating apply.
+- **Who's eating**: either person by name, or Both (default Both). Only restrictions for the people eating apply.
 - **Restriction chips**: every active restriction for the people eating, shown as chips. Tapping an `avoid` chip turns it off **for this request only**. `never` chips are shown but locked; they only drop off via "who's eating."
 - **Skip tonight**: free text for one-off exclusions ("no pasta, had it yesterday").
 - Options: meal type (any/breakfast/lunch/dinner/snack), max total time (any/30/45/60 min), servings (default 2), cuisine (optional free text), number of recipes (default 4, max 6).
@@ -187,7 +192,7 @@ Recipes added to the plan straight from results, without being saved, can be sto
 
 ## 7. Build phases
 
-Stop after each phase so Brad can test it.
+Stop after each phase so it can be tested by hand.
 
 1. **Skeleton**: FastAPI app, DB and migrations, seed data, base layout with the tab bar, PWA manifest and icons, `/health`, Dockerfile and compose, `.env.example`, pytest setup.
 2. **Pantry, staples & settings**: bulk add, Have/Buying, staples, people and restrictions editor.
