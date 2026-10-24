@@ -21,8 +21,23 @@ def lists_context(session: Session, note: str = "") -> dict:
     }
 
 
-def lists_response(request: Request, session: Session, note: str = ""):
-    """After a change: HTMX gets the refreshed lists, a plain form post gets a redirect."""
+def pantry_check_context(session: Session, note: str = "", expanded: bool = False) -> dict:
+    """What partials/pantry_check.html (on the Cook form) needs."""
+    lists = lists_context(session, note)
+    return {"have": lists["have"], "buying_count": len(lists["buying"]), "note": note, "expanded": expanded}
+
+
+def lists_response(request: Request, session: Session, note: str = "", view: str = ""):
+    """After a change: HTMX gets the refreshed lists, a plain form post gets a redirect.
+
+    view="cook" means the change was made from the pantry check on the Cook
+    form, so that's what gets redrawn (kept open), or redirected back to.
+    """
+    if view == "cook":
+        if is_htmx(request):
+            return render_partial(request, "partials/pantry_check.html",
+                                  **pantry_check_context(session, note, expanded=True))
+        return redirect("/")
     if is_htmx(request):
         return render_partial(request, "partials/pantry_lists.html", **lists_context(session, note))
     return redirect("/pantry")
@@ -44,22 +59,24 @@ def add_pantry_items(
     request: Request,
     names: str = Form(""),
     status: str = Form("have"),
+    view: str = "",
     session: Session = Depends(get_session),
 ):
     if status not in PANTRY_STATUSES:
         raise HTTPException(400, "Unknown list")
     result = pantry.add_items(session, names, status)
-    return lists_response(request, session, result.note(status))
+    return lists_response(request, session, result.note(status), view)
 
 
 @router.post("/pantry/items/{item_id}/delete")
-def delete_pantry_item(item_id: int, request: Request, session: Session = Depends(get_session)):
+def delete_pantry_item(item_id: int, request: Request, view: str = "",
+                       session: Session = Depends(get_session)):
     # Quietly ignore an item that's already gone (e.g. a double tap).
     item = session.get(PantryItem, item_id)
     if item:
         session.delete(item)
         session.commit()
-    return lists_response(request, session)
+    return lists_response(request, session, view=view)
 
 
 @router.post("/pantry/items/{item_id}/have")

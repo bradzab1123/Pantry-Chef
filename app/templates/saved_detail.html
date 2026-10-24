@@ -28,6 +28,7 @@
     {% endwith %}
     {% with plan_url = "/saved/" ~ r.id ~ "/plan" %}{% include "partials/plan_button.html" %}{% endwith %}
   </div>
+  {% with cooked_url = "/cooked/saved/" ~ r.id %}{% include "partials/cooked_button.html" %}{% endwith %}
 
   {% include "partials/recipe_body.html" %}
 </article>

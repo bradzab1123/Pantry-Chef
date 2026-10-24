@@ -5,6 +5,7 @@ Ingredients
 - Set each ingredient's source: "pantry" if it's on the pantry list, "staple" if it's a staple, "buy" otherwise.
 - missing_ingredients must list exactly the names of the "buy" ingredients.
 - Ingredient names are plain: "potatoes", not "potatoes, cut into 1-inch pieces"; "chicken thighs", not "chicken thighs, bone-in or boneless". Put prep and sizes in quantity, unit or the steps.
+- For "pantry" ingredients, write the name exactly as it appears on the pantry list ("chicken breast", not "boneless skinless chicken breasts"). Put any extra detail in quantity, unit or the steps.
 - Water and ordinary tap ice don't need to be listed as bought.
 
 Restrictions

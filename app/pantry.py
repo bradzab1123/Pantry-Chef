@@ -58,6 +58,16 @@ def normalize_name(text: str) -> str:
     return " ".join(words)
 
 
+def plain_name(name: str) -> str:
+    """The ingredient without prep notes, for matching and the buy list:
+    'potatoes, cut into 1-inch pieces' -> 'potatoes',
+    'chicken thighs (bone-in)' -> 'chicken thighs'.
+    Falls back to the whole name if cutting would leave nothing."""
+    cleaned = clean_name(name)
+    plain = re.split(r"[,(]", cleaned, maxsplit=1)[0].strip()
+    return plain or cleaned
+
+
 def _split(text: str) -> list[str]:
     """Split on commas and newlines; collapse whitespace; drop blanks."""
     parts = (" ".join(p.split()) for p in re.split(r"[,\n]", text))
@@ -135,6 +145,52 @@ def add_items(session: Session, text: str, status: str) -> AddResult:
         result.added.append(name)
     session.commit()
     return result
+
+
+# ---------- Matching a recipe ingredient to a pantry item ----------
+
+
+def _stemmed_words(text: str) -> list[str]:
+    """Every word stemmed (unlike normalize_name, which stems only the last),
+    so plurals line up wherever they sit: 'chicken breasts' -> ['chicken', 'breast']."""
+    return [_stem(word) for word in re.findall(r"[a-z0-9']+", clean_name(text))]
+
+
+def _contains_run(words: list[str], run: list[str]) -> bool:
+    """True if `run` appears in `words` as whole, consecutive words."""
+    n = len(run)
+    return n > 0 and any(words[i:i + n] == run for i in range(len(words) - n + 1))
+
+
+def match_pantry_item(ingredient_name: str, items: list[PantryItem]) -> PantryItem | None:
+    """The pantry item a recipe ingredient most likely refers to, or None.
+
+    Used by "Cooked it" to offer the pantry items a recipe used. A wrong
+    guess only adds a toggle that defaults to "still have", so this can be
+    looser than duplicate detection. (Again: NOT the restriction matcher.)
+
+    1. Same normalize_name (after dropping prep notes): 'Tomatoes, diced'
+       matches 'tomato'.
+    2. Otherwise the pantry item's words appear, whole and in order, inside
+       the ingredient: pantry 'chicken breast' matches 'boneless chicken
+       breasts'. Whole words only, so 'corn' doesn't match 'cornstarch' and
+       'egg' doesn't match 'eggplant'. Only that direction: ingredient
+       'chicken' doesn't match pantry 'chicken thighs'.
+    If several items fit step 2, the longest (most specific) one wins.
+    """
+    plain = plain_name(ingredient_name)
+    key = normalize_name(plain)
+    for item in items:
+        if item.normalized_name == key:
+            return item
+
+    words = _stemmed_words(plain)
+    best, best_len = None, 0
+    for item in items:
+        run = _stemmed_words(item.name)
+        if len(run) > best_len and _contains_run(words, run):
+            best, best_len = item, len(run)
+    return best
 
 
 def find_item(session: Session, name: str) -> PantryItem | None:

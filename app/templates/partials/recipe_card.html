@@ -22,4 +22,6 @@
   </details>
 
   {% with saved_recipe = saved.get(s.saved_recipe_id) %}{% include "partials/card_actions.html" %}{% endwith %}
+  {# Outside card_actions, so saving or rating doesn't close an open form. #}
+  {% with cooked_url = "/cooked/suggestion/" ~ s.id %}{% include "partials/cooked_button.html" %}{% endwith %}
 </article>

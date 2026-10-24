@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+{# The "Cooked it" form as a page of its own, for when JavaScript is off.
+   Needs: source, recipe (its JSON) and items. #}
+<p class="back"><a href="{{ source.back_url }}">‹ Back</a></p>
+<section class="card">
+  <h2>Cooked {{ recipe.title }}</h2>
+  {% include "partials/cooked_form.html" %}
+</section>
+{% endblock %}

@@ -380,6 +380,22 @@ button.switch[aria-checked="true"]::after { transform: translateX(20px); }
 }
 .chip-avoid:has(input:focus-visible) { outline: 2px solid var(--accent); }
 
+/* "Cooking from N pantry items · Review" above the Suggest button. */
+.pantry-check { margin-top: 16px; border-top: 1px solid var(--border); }
+.pantry-check summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+.pantry-check-link { color: var(--accent); font-weight: 600; }
+.pantry-check .chips { margin-bottom: 10px; }
+.pantry-check-add { margin: 0; }
+
 .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
 
 button.wide { width: 100%; margin-top: 16px; }
@@ -466,6 +482,49 @@ button[disabled] { opacity: 0.6; cursor: progress; }
 }
 .card-actions form, .rating form { margin: 0; }
 .saved-link { color: var(--accent); font-weight: 600; }
+
+/* ---------- Cooked it ---------- */
+
+.cooked { margin-top: 8px; }
+.cooked .note { margin: 0; }
+.cooked-form { margin: 0; }
+.cooked-form .hint { margin-bottom: 8px; }
+
+/* Used-up chips are checkboxes: unticked = still have, ticked = used up. */
+.chip-used {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--accent-soft);
+  cursor: pointer;
+}
+.chip-used input { position: absolute; opacity: 0; pointer-events: none; }
+.chip-state { color: var(--muted); font-size: 0.85rem; }
+.chip-state::before { content: "still have"; }
+.chip-used:has(input:checked) {
+  background: transparent;
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.chip-used:has(input:checked) span:first-of-type { text-decoration: line-through; }
+.chip-used:has(input:checked) .chip-state { color: var(--warn); }
+.chip-used:has(input:checked) .chip-state::before { content: "used up"; }
+.chip-used:has(input:focus-visible) { outline: 2px solid var(--accent); }
+
+/* A plain checkbox with its label beside it. */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  margin-top: 8px;
+  cursor: pointer;
+}
+.checkbox-label input { width: 20px; height: 20px; min-height: 0; margin: 0; flex: none; }
 
 .rating { display: flex; gap: 8px; }
 .saved-recipe > .card-actions { margin: 10px 0 4px; }

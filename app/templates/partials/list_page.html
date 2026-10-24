@@ -22,6 +22,7 @@
                 {% include "partials/recipe_body.html" %}
                 {% if p.saved_recipe_id %}<p><a href="/saved/{{ p.saved_recipe_id }}">Open saved recipe ›</a></p>{% endif %}
               </details>
+              {% with cooked_url = "/cooked/plan/" ~ p.id %}{% include "partials/cooked_button.html" %}{% endwith %}
             </div>
             <form method="post" action="/plan/{{ p.id }}/delete"
                   hx-post="/plan/{{ p.id }}/delete" hx-target="#list-page" hx-swap="outerHTML">

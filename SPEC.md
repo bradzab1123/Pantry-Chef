@@ -90,6 +90,17 @@ Output: recipe cards showing title, short summary, time, and a highlighted "Need
 - Staples: add, remove, toggle
 - Usage: this month's generation count, input/output tokens and estimated cost (prices per million tokens come from env vars)
 
+### 2.6 Cooked it & pantry check
+Keeps the pantry accurate after cooking without tracking quantities.
+
+- **Cooked it** on Cook cards (and spin-off cards), the saved recipe page, and each planned recipe on the List. It expands a small form in place listing the recipe's ingredients that are in **Have** (sources `pantry` and `buy`, since a "buy" item may have been bought since; `staple` ingredients are skipped).
+- Matching an ingredient to a Have item: same `normalize_name` first (after dropping prep notes), else the pantry name appears as whole words inside the ingredient ("chicken breast" matches "boneless chicken breasts"; "corn" doesn't match "cornstarch"). The most specific item wins. This is not the restriction matcher.
+- Each item is a toggle, default "still have"; tap the ones used up. "Put used-up items on the shopping list" (on by default) moves them to Buying; off deletes them from the pantry. With nothing in Have, the form just says so and offers Done.
+- Done also takes the recipe off this week's plan (any plan item with the same recipe JSON) and syncs the shopping list. A short confirmation replaces the form ("Moved chicken breast, rice to Buying."); cooking from the List redraws the List with it on top.
+- The recipe is loaded by id (suggestion, saved recipe or plan item), never from the form. Posted pantry ids are accepted only if they're still in Have and match this recipe.
+- **Pantry check** on the Cook form, above "Suggest recipes": a collapsed line "Cooking from N pantry items · M buying · Review". Expanded, it shows Have as chips with ✕ to delete, plus a quick add to Have. It never blocks or delays generating.
+- The model is asked to write "pantry" ingredient names exactly as they appear on the pantry list, so most matches are exact.
+
 ---
 
 ## 3. LLM integration

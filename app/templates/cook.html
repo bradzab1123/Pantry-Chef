@@ -3,10 +3,13 @@
 {# Generating takes a while, so: the indicator shows while the request runs,
    and the button is disabled so a second tap can't start a second request.
    hx-disinherit keeps those two off the "who's eating" radios inside the
-   form, so swapping the chips doesn't flash the "Cooking up ideas" note. #}
-<form class="card cook-form" method="post" action="/cook/generate"
+   form, so swapping the chips doesn't flash the "Cooking up ideas" note.
+   The pantry check has forms of its own and forms can't nest, so the
+   generate form ends above it and the button below joins it with form=. #}
+<div class="card cook-form">
+<form id="cook-form" method="post" action="/cook/generate"
       hx-post="/cook/generate" hx-target="#results" hx-swap="outerHTML"
-      hx-indicator="#generating" hx-disabled-elt="find button[type=submit]"
+      hx-indicator="#generating" hx-disabled-elt="#suggest"
       hx-disinherit="hx-indicator hx-disabled-elt">
 
   <fieldset class="choice-group">
@@ -74,11 +77,18 @@
   <input id="cuisine" name="cuisine" value="{{ form.cuisine }}" maxlength="60" autocomplete="off"
          placeholder="e.g. Thai, Mexican, comfort food">
 
-  <button type="submit" class="primary wide">Suggest recipes</button>
-  <p id="generating" class="htmx-indicator generating" role="status">
-    <span class="spinner" aria-hidden="true"></span> Cooking up ideas… this can take 20–30 seconds.
-  </p>
 </form>
+
+{% with have = pantry_check.have, buying_count = pantry_check.buying_count,
+        note = pantry_check.note, expanded = pantry_check.expanded %}
+  {% include "partials/pantry_check.html" %}
+{% endwith %}
+
+<button type="submit" form="cook-form" id="suggest" class="primary wide">Suggest recipes</button>
+<p id="generating" class="htmx-indicator generating" role="status">
+  <span class="spinner" aria-hidden="true"></span> Cooking up ideas… this can take 20–30 seconds.
+</p>
+</div>
 
 {% include "partials/cook_results.html" %}
 {% endblock %}

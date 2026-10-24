@@ -1,0 +1,37 @@
+{# "Cooked it": which of the recipe's Have items got used up. Needs: source
+   (cooked.Source) and items (the matched Have items). Each item is a
+   checkbox styled as a chip: unticked = still have, ticked = used up.
+   A planned recipe redraws the whole List (its row goes away); anything
+   else just swaps this form for a short confirmation. #}
+<div class="cooked">
+  <form class="cooked-form" method="post" action="{{ source.url }}"
+        hx-post="{{ source.url }}"
+        {% if source.kind == "plan" %}hx-target="#list-page"{% else %}hx-target="closest .cooked"{% endif %}
+        hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]">
+    {% if items %}
+      <p class="hint">Tap what you used up. The rest stays in Have.</p>
+      <ul class="chips">
+        {% for item in items %}
+          <li>
+            <label class="chip-used">
+              <input type="checkbox" name="used" value="{{ item.id }}">
+              <span>{{ item.name }}</span>
+              <span class="chip-state" aria-hidden="true"></span>
+            </label>
+          </li>
+        {% endfor %}
+      </ul>
+      <label class="checkbox-label">
+        <input type="checkbox" name="to_list" value="1" checked>
+        Put used-up items on the shopping list
+      </label>
+    {% else %}
+      <p class="hint">None of this recipe's ingredients are in Have.</p>
+    {% endif %}
+    <div class="button-row">
+      <button type="submit" class="small primary">Done</button>
+      <a class="button small" href="{{ source.back_url }}"
+         hx-get="{{ source.url }}/cancel" hx-target="closest .cooked" hx-swap="outerHTML">Cancel</a>
+    </div>
+  </form>
+</div>

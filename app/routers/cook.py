@@ -5,6 +5,7 @@ from sqlmodel import Session
 
 from app import cook, llm, saved, shopping
 from app.db import get_session
+from app.routers.pantry import pantry_check_context
 from app.web import is_htmx, redirect, render, render_partial
 
 router = APIRouter()
@@ -26,6 +27,7 @@ def page_context(session: Session, req: cook.CookRequest) -> dict:
         "notes": [],
         "error": "",
         **cook.chips(session, cook.eating(session, req.eaters)),
+        "pantry_check": pantry_check_context(session),
     }
 
 
@@ -40,6 +42,12 @@ def restriction_chips(request: Request, eaters: str = "both", session: Session =
     """Swapped in when "who's eating" changes. All avoid chips start switched on."""
     return render_partial(request, "partials/cook_chips.html",
                           avoid_on=None, **cook.chips(session, cook.eating(session, eaters)))
+
+
+@router.get("/cook/pantry-check")
+def pantry_check(request: Request, session: Session = Depends(get_session)):
+    """Redrawn (closed) when a "Cooked it" on this page changes the pantry."""
+    return render_partial(request, "partials/pantry_check.html", **pantry_check_context(session))
 
 
 @router.post("/cook/generate")

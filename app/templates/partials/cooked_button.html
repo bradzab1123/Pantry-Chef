@@ -1,0 +1,7 @@
+{# The "Cooked it" button. Tapping it swaps in partials/cooked_form.html in
+   its place. Needs: cooked_url (/cooked/<kind>/<id>). Without JavaScript
+   the link opens the form as a page of its own. #}
+<div class="cooked">
+  <a class="button small" href="{{ cooked_url }}"
+     hx-get="{{ cooked_url }}" hx-target="closest .cooked" hx-swap="outerHTML">Cooked it</a>
+</div>

@@ -395,6 +395,11 @@ def test_system_prompt_asks_for_plain_names_and_requested_servings():
     assert "two-person" not in system
 
 
+def test_system_prompt_asks_for_pantry_names_as_listed():
+    # Lets "Cooked it" match ingredients to pantry items exactly.
+    assert "exactly as it appears on the pantry list" in llm.system_prompt()
+
+
 def test_too_many_buys_regenerates(client, fake_llm):
     greedy = recipe("Feast", ingredients=[("a1", "buy"), ("b2", "buy"), ("c3", "buy")])
     fake_llm.reply([greedy]).reply([recipe("Simple")])

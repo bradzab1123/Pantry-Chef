@@ -12,14 +12,13 @@ generate() does the whole job:
 5. Store what passed as the new batch of suggestions.
 """
 
-import re
 from dataclasses import dataclass, field
 
 from sqlmodel import Session, delete, select
 
 from app import llm
 from app.models import PantryItem, Person, Restriction, SavedRecipe, Staple, Suggestion
-from app.pantry import clean_name, normalize_name
+from app.pantry import normalize_name, plain_name
 from app.restrictions import check_recipe, never_restrictions_for, violation_message
 from app.schemas import MAX_MISSING, Recipe
 
@@ -185,16 +184,6 @@ TOO_MANY_BUYS = "too_many_buys"
 class Problem:
     kind: str     # RESTRICTED or TOO_MANY_BUYS
     message: str  # told to the model when asking for a replacement
-
-
-def plain_name(name: str) -> str:
-    """The ingredient without prep notes, for matching and the buy list:
-    'potatoes, cut into 1-inch pieces' -> 'potatoes',
-    'chicken thighs (bone-in)' -> 'chicken thighs'.
-    Falls back to the whole name if cutting would leave nothing."""
-    cleaned = clean_name(name)
-    plain = re.split(r"[,(]", cleaned, maxsplit=1)[0].strip()
-    return plain or cleaned
 
 
 def tidy_buys(recipe: Recipe, available: dict[str, str]) -> Recipe:
