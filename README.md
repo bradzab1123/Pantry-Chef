@@ -1,6 +1,6 @@
 # Pantry Chef
 
-[![CI](https://github.com/bradzab1123/pantry-chef/actions/workflows/ci.yml/badge.svg)](https://github.com/bradzab1123/pantry-chef/actions/workflows/ci.yml)
+[![CI](https://github.com/bradzab1123/Pantry-Chef/actions/workflows/ci.yml/badge.svg)](https://github.com/bradzab1123/Pantry-Chef/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)
 
@@ -41,8 +41,8 @@ The app has no accounts of its own. It's meant to sit behind Cloudflare Access (
 ## Quick start
 
 ```bash
-git clone https://github.com/bradzab1123/pantry-chef.git
-cd pantry-chef
+git clone https://github.com/bradzab1123/Pantry-Chef.git
+cd Pantry-Chef
 python -m venv .venv
 .venv/Scripts/activate        # Windows (Git Bash); on Linux/macOS: source .venv/bin/activate
 pip install -r requirements-dev.txt
