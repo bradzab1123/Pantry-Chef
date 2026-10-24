@@ -1,6 +1,7 @@
 {# "Cooked it": which of the recipe's Have items got used up. Needs: source
-   (cooked.Source) and items (the matched Have items). Each item is a
-   checkbox styled as a chip: unticked = still have, ticked = used up.
+   (cooked.Source) and items (the matched Have items). One row per item:
+   a checkbox with the name beside it; ticked = used up (struck through,
+   with a "used up" tag), unticked = still have.
    A planned recipe redraws the whole List (its row goes away); anything
    else just swaps this form for a short confirmation. #}
 <div class="cooked">
@@ -9,19 +10,20 @@
         {% if source.kind == "plan" %}hx-target="#list-page"{% else %}hx-target="closest .cooked"{% endif %}
         hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]">
     {% if items %}
-      <p class="hint">Tap what you used up. The rest stays in Have.</p>
-      <ul class="chips">
+      <p class="field-label">What did you use up?</p>
+      <ul class="used-list">
         {% for item in items %}
           <li>
-            <label class="chip-used">
+            <label class="used-item">
               <input type="checkbox" name="used" value="{{ item.id }}">
-              <span>{{ item.name }}</span>
-              <span class="chip-state" aria-hidden="true"></span>
+              <span class="used-name">{{ item.name }}</span>
+              <span class="used-tag">used up</span>
             </label>
           </li>
         {% endfor %}
       </ul>
-      <label class="checkbox-label">
+      <p class="hint">Anything you don't tick stays in Have.</p>
+      <label class="checkbox-label list-option">
         <input type="checkbox" name="to_list" value="1" checked>
         Put used-up items on the shopping list
       </label>

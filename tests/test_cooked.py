@@ -77,7 +77,7 @@ def cooked(client, url, used=(), to_list=True, **kwargs):
 
 def offered(html) -> list[str]:
     """Names of the pantry items the form offers, in order."""
-    return re.findall(r'name="used" value="\d+">\s*<span>([^<]+)</span>', html)
+    return re.findall(r'name="used" value="\d+">\s*<span class="used-name">([^<]+)</span>', html)
 
 
 # ---------- The form ----------

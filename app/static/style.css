@@ -488,32 +488,40 @@ button[disabled] { opacity: 0.6; cursor: progress; }
 .cooked { margin-top: 8px; }
 .cooked .note { margin: 0; }
 .cooked-form { margin: 0; }
-.cooked-form .hint { margin-bottom: 8px; }
+.cooked-form .field-label { margin-top: 4px; }
+.cooked-form .hint { margin: 0 0 4px; }
 
-/* Used-up chips are checkboxes: unticked = still have, ticked = used up. */
-.chip-used {
-  display: inline-flex;
+/* One row per Have item: checkbox, then the name. Ticked = used up. */
+.used-list { list-style: none; margin: 0 0 6px; padding: 0; }
+.used-item {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: var(--tap);
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: var(--accent-soft);
+  gap: 12px;
+  min-height: 44px;
+  border-top: 1px solid var(--border);
   cursor: pointer;
 }
-.chip-used input { position: absolute; opacity: 0; pointer-events: none; }
-.chip-state { color: var(--muted); font-size: 0.85rem; }
-.chip-state::before { content: "still have"; }
-.chip-used:has(input:checked) {
-  background: transparent;
-  border-color: var(--warn);
-  color: var(--warn);
+.used-list li:first-child .used-item { border-top: 0; }
+.used-item input {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  margin: 0;
+  flex: none;
+  accent-color: var(--warn);
 }
-.chip-used:has(input:checked) span:first-of-type { text-decoration: line-through; }
-.chip-used:has(input:checked) .chip-state { color: var(--warn); }
-.chip-used:has(input:checked) .chip-state::before { content: "used up"; }
-.chip-used:has(input:focus-visible) { outline: 2px solid var(--accent); }
+.used-name { min-width: 0; overflow-wrap: anywhere; }
+.used-tag { display: none; }
+.used-item:has(input:checked) .used-name { color: var(--muted); text-decoration: line-through; }
+.used-item:has(input:checked) .used-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
 
 /* A plain checkbox with its label beside it. */
 .checkbox-label {
@@ -524,7 +532,17 @@ button[disabled] { opacity: 0.6; cursor: progress; }
   margin-top: 8px;
   cursor: pointer;
 }
-.checkbox-label input { width: 20px; height: 20px; min-height: 0; margin: 0; flex: none; }
+.checkbox-label input {
+  width: 20px; height: 20px; min-height: 0; margin: 0; flex: none;
+  accent-color: var(--accent);
+}
+/* The shopping-list option, set apart from the items above it. */
+.list-option {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 0.92rem;
+}
 
 .rating { display: flex; gap: 8px; }
 .saved-recipe > .card-actions { margin: 10px 0 4px; }

@@ -1,5 +1,6 @@
 """Shared web bits used by main.py and the routers: templates, tab bar, render helpers."""
 
+import hashlib
 from pathlib import Path
 
 from fastapi import Request
@@ -10,8 +11,24 @@ from app.schemas import strip_step_number
 
 APP_DIR = Path(__file__).resolve().parent
 
+
+def static_version() -> str:
+    """A short fingerprint of the CSS and JS, added to their URLs (?v=...).
+
+    The service worker serves /static/ files from its cache first, so after
+    an update the browser would show the OLD stylesheet once. A new URL is a
+    cache miss, so a changed file is fetched straight away.
+    """
+    digest = hashlib.sha256()
+    for name in ("style.css", "htmx.min.js"):
+        digest.update((APP_DIR / "static" / name).read_bytes())
+    return digest.hexdigest()[:10]
+
+
 templates = Jinja2Templates(directory=APP_DIR / "templates")
 templates.env.filters["strip_step_number"] = strip_step_number
+# Worked out once at startup: the files only change with a new image.
+templates.env.globals["static_version"] = static_version()
 
 # Bottom tab bar, in display order: (key, label, url).
 TABS = [
