@@ -21,7 +21,7 @@ Pantry Chef: a self-hosted PWA that suggests recipes from our pantry while respe
 - Tests: `pytest`
 - Docker: `docker compose up --build` (needs `.env` and the external `TUNNEL_NETWORK` network; locally: `docker network create cloudflared`)
 - Regenerate icons: `python scripts/make_icons.py`
-- CI: `.github/workflows/ci.yml` runs pytest on PRs and pushes to `main`; on `main` it then pushes `ghcr.io/<owner>/pantry-chef:latest` and `:sha-<short>`
+- CI: `.github/workflows/ci.yml` runs pytest on PRs and pushes to `main`; on `main` it then pushes `ghcr.io/<owner>/pantry-chef:latest` and `:sha-<short>`; a manual "Run workflow" on another branch pushes `:<branch>` (`/` → `-`) and `:sha-<short>`, never `:latest`
 - Server update: `docker compose pull && docker compose up -d` (roll back with `IMAGE_TAG=sha-...` in `.env`). Deploy, Cloudflare and backup steps are in README.md.
 
 ## Conventions
