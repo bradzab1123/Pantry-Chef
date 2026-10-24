@@ -21,7 +21,7 @@ Pantry Chef: a self-hosted PWA that suggests recipes from our pantry while respe
 - Tests: `pytest`
 - Docker: `docker compose up --build` (needs `.env` and the external `TUNNEL_NETWORK` network; locally: `docker network create cloudflared`)
 - Regenerate icons: `python scripts/make_icons.py`
-- CI: `.github/workflows/ci.yml` runs pytest on PRs and pushes to `main`; on `main` it then pushes `ghcr.io/<owner>/pantry-chef:latest` and `:sha-<short>`
+- CI: `.github/workflows/ci.yml` runs pytest on PRs and pushes to `main`; on `main` it then pushes `ghcr.io/<owner>/pantry-chef:latest` and `:sha-<short>`; a manual "Run workflow" on another branch pushes `:<branch>` (`/` → `-`) and `:sha-<short>`, never `:latest`
 - Server update: `docker compose pull && docker compose up -d` (roll back with `IMAGE_TAG=sha-...` in `.env`). Deploy, Cloudflare and backup steps are in README.md.
 
 ## Conventions
@@ -35,6 +35,8 @@ Pantry Chef: a self-hosted PWA that suggests recipes from our pantry while respe
 - The `suggestion` table holds the latest batch only: one Cook batch (`parent_recipe_id` NULL) plus one spin-off batch per saved recipe. Saving and rating copy from it by id (never recipe JSON from the form); `saved_recipe_id` marks which saved recipe a card became. Rating an unsaved card saves it.
 - Plan: `plan_item` always holds its own copy of the recipe JSON (copied server-side from a suggestion or saved recipe by id), plus `saved_recipe_id` when saved; deleting that saved recipe cascades it off the plan. "Already planned" = equal recipe JSON.
 - Shopping list (`shopping.py`): unchecked `plan` rows are owned by `shopping.sync()` (run after plan changes and on every `/list` load); it merges by `normalize_name` and skips Have, Buying and enabled staples. It never touches `manual` or checked rows. Buying items are shown on the List straight from `pantry_item`, not copied. Checking moves the item into Have and records `pantry_item_id` so unchecking undoes exactly that; a checked Buying item becomes a `buying` row so undo puts it back in Buying.
+- Cooked it (`cooked.py`, `/cooked/{suggestion|saved|plan}/{id}`): the recipe is loaded by kind and id, never from the form. Candidates are Have items matched by `pantry.match_pantry_item` (not the restriction matcher) to `pantry`/`buy` ingredients; posted ids are re-checked against the current candidates, so stale or foreign ids are ignored. Used-up items go to Buying (default) or are deleted; plan rows with equal recipe JSON are removed, then `shopping.sync()`. Cooking from the plan returns the whole `list_page.html`; elsewhere it returns `cooked_done.html` with `HX-Trigger: pantry-changed`.
+- Pantry check on the Cook form: it sits outside the generate form (forms can't nest), and the Suggest button joins that form with `form="cook-form"`. Its ✕ and quick add reuse the Pantry routes with `?view=cook`, which return `pantry_check.html` (open) or redirect to `/`.
 - Steps are shown in an `<ol>`, so `schemas.strip_step_number` drops any number the model adds (on parse, and as a template filter for older saved recipes).
 - LLM calls go through `llm.request_recipes()` (structured output via `output_config.format`, one validation retry, every call logged). Tests use the `fake_llm` fixture; an autouse fixture makes un-faked calls fail.
 
@@ -43,10 +45,11 @@ Pantry Chef: a self-hosted PWA that suggests recipes from our pantry while respe
 app/
   main.py          # FastAPI app: wires routers, /health, /sw.js
   web.py           # templates, tab bar, render/render_partial, is_htmx, redirect
-  routers/         # one APIRouter per page (cook.py, pantry.py, saved.py, settings.py, setup.py, shopping.py)
+  routers/         # one APIRouter per page (cook.py, cooked.py, pantry.py, saved.py, settings.py, setup.py, shopping.py)
   cook.py          # Cook tab: form parsing, prompt context, review/filter, regenerate-once
+  cooked.py        # "Cooked it": find the recipe, match its ingredients to Have, apply used-up
   saved.py         # save/rate cards, Saved list/search, heads-up for new never rules, spin-offs
-  pantry.py        # name cleaning, plural-folding normalize_name, bulk add
+  pantry.py        # name cleaning, plural-folding normalize_name, plain_name, bulk add, ingredient matcher
   db.py            # engine, session, migrations
   models.py        # DB models
   schemas.py       # Pydantic LLM schemas

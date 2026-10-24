@@ -1,0 +1,41 @@
+{# "Cooking from N pantry items" on the Cook form: a quick look at Have,
+   with ✕ to delete and a quick add. Needs: have, buying_count, note and
+   expanded (true after a change made here, so it stays open).
+   It sits outside the generate form (forms can't nest), so nothing here
+   is sent with "Suggest recipes" and it can't hold up generating. It
+   reloads itself (closed) when a "Cooked it" changes the pantry. #}
+<details id="pantry-check" class="pantry-check" {% if expanded %}open{% endif %}
+         hx-get="/cook/pantry-check" hx-trigger="pantry-changed from:body" hx-swap="outerHTML">
+  <summary>
+    {% if have %}
+      Cooking from {{ have|length }} pantry item{{ "s" if have|length != 1 else "" }}{% if buying_count %} · {{ buying_count }} buying{% endif %} · <span class="pantry-check-link">Review</span>
+    {% else %}
+      Pantry is empty{% if buying_count %} · {{ buying_count }} buying{% endif %} · <span class="pantry-check-link">Add items</span>
+    {% endif %}
+  </summary>
+
+  {% if note %}<p class="note" role="status">{{ note }}</p>{% endif %}
+  {% if have %}
+    <ul class="chips">
+      {% for item in have %}
+        <li>
+          <form method="post" action="/pantry/items/{{ item.id }}/delete?view=cook"
+                hx-post="/pantry/items/{{ item.id }}/delete?view=cook" hx-target="#pantry-check" hx-swap="outerHTML">
+            <button type="submit" class="chip" aria-label="Remove {{ item.name }}">
+              {{ item.name }} <span class="chip-x" aria-hidden="true">×</span>
+            </button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <form class="pantry-check-add" method="post" action="/pantry/items?view=cook"
+        hx-post="/pantry/items?view=cook" hx-target="#pantry-check" hx-swap="outerHTML">
+    <input type="hidden" name="status" value="have">
+    <label for="pantry-check-names" class="visually-hidden">Add to Have</label>
+    <div class="inline-field">
+      <input id="pantry-check-names" name="names" autocomplete="off" placeholder="Add to Have, e.g. spinach, feta">
+      <button type="submit">Add</button>
+    </div>
+  </form>
+</details>

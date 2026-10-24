@@ -5,6 +5,11 @@
 #   Docker image and push it to GHCR as
 #     ghcr.io/<owner>/pantry-chef:latest
 #     ghcr.io/<owner>/pantry-chef:sha-<short commit sha>
+# - Manual run on any other branch ("Run workflow" on the Actions tab, pick
+#   the branch): same, but tagged with the branch name instead of latest,
+#   so a branch can be tried on the server before it's merged:
+#     ghcr.io/<owner>/pantry-chef:<branch, "/" becomes "-">  e.g. feature-cooked-it
+#     ghcr.io/<owner>/pantry-chef:sha-<short commit sha>
 #
 # No secrets are needed: tests fake the Anthropic client, and pushing to GHCR
 # uses the built-in GITHUB_TOKEN.
@@ -47,8 +52,9 @@ jobs:
 
   build:
     needs: test
-    # Only publish images from main, never from pull requests or other branches.
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    # Publish on a push to main, or when someone runs the workflow by hand
+    # (on any branch). Never from pull requests.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -66,14 +72,16 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Works out the image tags, and adds OCI labels (including the source
-      # repo, which links the GHCR package to this repository).
+      # repo, which links the GHCR package to this repository). `latest`
+      # only ever comes from main; other branches get their name as the tag.
       - name: Image tags and labels
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/pantry-chef
           tags: |
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
             type=sha,format=short
 
       - name: Build and push

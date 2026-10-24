@@ -10,7 +10,7 @@ from sqlalchemy import text
 from sqlmodel import Session
 
 from app.db import get_engine, migrate
-from app.routers import cook, pantry, saved, settings, setup, shopping
+from app.routers import cook, cooked, pantry, saved, settings, setup, shopping
 from app.web import APP_DIR, TABS, redirect  # noqa: F401  (TABS is imported by tests)
 
 STATIC_DIR = APP_DIR / "static"
@@ -29,6 +29,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title="Pantry Chef", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.include_router(cook.router)
+app.include_router(cooked.router)
 app.include_router(pantry.router)
 app.include_router(saved.router)
 app.include_router(settings.router)

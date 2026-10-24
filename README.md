@@ -109,11 +109,13 @@ The container publishes **no ports**, so you can't open it at localhost:8000 thi
 | Pull request | `pytest` |
 | Push to `main` | `pytest`, then build the image and push it to GHCR |
 | Manual ("Run workflow" on the Actions tab, on `main`) | same as a push to `main` |
+| Manual, on any other branch | `pytest`, then build and push an image tagged with the branch name (never `latest`) |
 
 The image is published as:
 
 - `ghcr.io/<github-user>/pantry-chef:latest`
 - `ghcr.io/<github-user>/pantry-chef:sha-<short commit sha>` (e.g. `sha-eafbe7e`), so you can roll back to any build
+- from a manual run on a branch: `ghcr.io/<github-user>/pantry-chef:<branch>`, with `/` turned into `-` (e.g. `feature-cooked-it`), plus its `sha-` tag
 
 No repository secrets are needed. The tests fake the Anthropic client, and the push uses the workflow's built-in `GITHUB_TOKEN`. The image is built for `linux/amd64` only.
 
@@ -237,6 +239,8 @@ docker compose pull && docker compose up -d
 ```
 
 Migrations run automatically on startup. Optionally clean up old images afterwards with `docker image prune`.
+
+**Trying a branch before merging it:** on GitHub, open **Actions** → **CI** → **Run workflow**, pick the branch and run it. When it's green, back up the database (see [Backups](#backups)), set `IMAGE_TAG` in `.env` to the branch name with `/` turned into `-` (e.g. `IMAGE_TAG=feature-cooked-it`), and run `docker compose pull && docker compose up -d`. After merging, remove the line and pull again to get the new `latest`. Push more commits to the branch? Run the workflow again and pull again.
 
 **Rolling back:** set `IMAGE_TAG` in `.env` to an earlier build, e.g. `IMAGE_TAG=sha-eafbe7e`. The tags are on the package page on GitHub. Then run `docker compose pull && docker compose up -d`. To go back to the newest build, remove the line (it defaults to `latest`). Be aware that migrations only go forward, so after a rollback an older image runs against a database that already has the newer schema. That's fine for added columns and tables, but take a [backup](#backups) before updating if a release changes the schema.
 

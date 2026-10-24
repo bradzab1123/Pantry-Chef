@@ -169,3 +169,15 @@ def test_apple_touch_icon_is_180(client):
     response = client.get("/static/icons/apple-touch-icon.png")
     assert response.status_code == 200
     assert Image.open(BytesIO(response.content)).size == (180, 180)
+
+
+def test_css_and_js_urls_carry_a_version(client):
+    """The service worker serves cached /static/ files first, so the page
+    links them with ?v=<fingerprint>; a changed file gets a new URL."""
+    from app.web import static_version
+
+    html = client.get("/").text
+    version = static_version()
+    assert f'href="/static/style.css?v={version}"' in html
+    assert f'src="/static/htmx.min.js?v={version}"' in html
+    assert client.get(f"/static/style.css?v={version}").status_code == 200

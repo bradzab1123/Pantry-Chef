@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 
 from app import db
 from app.models import PantryItem
-from app.pantry import clean_name, normalize_name, split_items, split_terms
+from app.pantry import clean_name, match_pantry_item, normalize_name, split_items, split_terms
 
 HTMX = {"HX-Request": "true"}
 
@@ -175,3 +175,116 @@ def test_move_to_have_when_already_in_have_removes_the_buying_entry(client):
         s.commit()
     client.post(f"/pantry/items/{item_id('lemons')}/have", headers=HTMX)
     assert pantry() == {"lemon": "have"}
+
+
+# ---------- match_pantry_item ("Cooked it"; NOT the restriction matcher) ----------
+
+
+def have_items(*names) -> list[PantryItem]:
+    """Unsaved PantryItems, enough for the matcher (it only reads the names)."""
+    return [PantryItem(id=i, name=n, normalized_name=normalize_name(n), status="have")
+            for i, n in enumerate(names, start=1)]
+
+
+def matched_name(ingredient, *pantry_names):
+    item = match_pantry_item(ingredient, have_items(*pantry_names))
+    return item.name if item else None
+
+
+@pytest.mark.parametrize("ingredient,pantry_name", [
+    ("chicken breast", "chicken breast"),                # exact
+    ("Chicken Breast", "chicken breast"),                # case
+    ("tomatoes", "tomato"),                              # plural
+    ("tomato", "tomatoes"),
+    ("cherry tomatoes", "cherry tomato"),
+    ("potatoes, cut into 1-inch pieces", "potato"),      # prep notes dropped
+    ("chicken thighs (bone-in)", "chicken thighs"),
+    ("boneless chicken breast", "chicken breast"),       # whole-word containment
+    ("boneless skinless chicken breasts", "chicken breast"),
+    ("fresh spinach", "spinach"),
+    ("crumbled feta cheese", "feta"),
+    ("large eggs", "egg"),
+])
+def test_match_finds_the_pantry_item(ingredient, pantry_name):
+    assert matched_name(ingredient, pantry_name) == pantry_name
+
+
+@pytest.mark.parametrize("ingredient,pantry_name", [
+    ("cornstarch", "corn"),          # part of a word doesn't count
+    ("corn starch", "cornstarch"),
+    ("eggplant", "egg"),
+    ("egg", "eggplant"),
+    ("peppercorns", "pepper"),
+    ("chicken", "chicken thighs"),   # only the pantry name inside the ingredient
+    ("chicken breast", "breast milk"),
+    ("rice", "rice vinegar"),
+    ("", "rice"),
+])
+def test_match_has_no_false_matches(ingredient, pantry_name):
+    assert matched_name(ingredient, pantry_name) is None
+
+
+def test_match_prefers_exact_then_most_specific():
+    assert matched_name("chicken breast", "chicken", "chicken breast") == "chicken breast"
+    assert matched_name("boneless chicken breast", "chicken", "chicken breast") == "chicken breast"
+    assert matched_name("red onion", "onion", "red onion") == "red onion"
+
+
+def test_match_empty_pantry():
+    assert match_pantry_item("rice", []) is None
+
+
+# ---------- The pantry check on the Cook form ----------
+
+
+def test_cook_form_shows_the_pantry_check(client):
+    add(client, "milk, eggs, bread")
+    add(client, "lemons", "buying")
+    html = client.get("/").text
+    assert 'id="pantry-check"' in html
+    assert "Cooking from 3 pantry items · 1 buying · " in html
+    # It sits outside the generate form; the button joins the form by id.
+    assert 'form="cook-form"' in html
+    assert html.index("</form>", html.index('id="cook-form"')) < html.index('id="pantry-check"')
+
+
+def test_pantry_check_when_empty(client):
+    html = client.get("/").text
+    assert "Pantry is empty" in html
+    assert "Add items" in html
+
+
+def test_pantry_check_delete(client):
+    add(client, "milk, eggs")
+    response = client.post(f"/pantry/items/{item_id('milk')}/delete?view=cook", headers=HTMX)
+    assert response.status_code == 200
+    assert 'id="pantry-check"' in response.text
+    assert "<details" in response.text and " open" in response.text  # stays open
+    assert "Cooking from 1 pantry item · " in response.text
+    assert pantry("have") == {"eggs": "have"}
+
+
+def test_pantry_check_quick_add(client):
+    add(client, "milk")
+    response = client.post("/pantry/items?view=cook",
+                           data={"names": "spinach, Milk", "status": "have"}, headers=HTMX)
+    assert 'id="pantry-check"' in response.text
+    assert "Cooking from 2 pantry items · " in response.text
+    assert "milk is already on the list" in response.text
+    assert pantry("have") == {"milk": "have", "spinach": "have"}
+
+
+def test_pantry_check_plain_posts_redirect_to_cook(client):
+    add(client, "milk")
+    response = client.post(f"/pantry/items/{item_id('milk')}/delete?view=cook", follow_redirects=False)
+    assert response.status_code == 303 and response.headers["location"] == "/"
+    response = client.post("/pantry/items?view=cook", data={"names": "rice", "status": "have"},
+                           follow_redirects=False)
+    assert response.status_code == 303 and response.headers["location"] == "/"
+
+
+def test_pantry_check_reloads_closed(client):
+    add(client, "milk")
+    html = client.get("/cook/pantry-check", headers=HTMX).text
+    assert "Cooking from 1 pantry item · " in html
+    assert "<details" in html and " open" not in html

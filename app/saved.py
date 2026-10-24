@@ -46,6 +46,13 @@ def get_suggestion(session: Session, suggestion_id: int) -> Suggestion:
     return suggestion
 
 
+def card_page(suggestion: Suggestion) -> str:
+    """The page a card is shown on: its parent's Saved page, or Cook."""
+    if suggestion.parent_recipe_id:
+        return f"/saved/{suggestion.parent_recipe_id}"
+    return "/"
+
+
 def save_suggestion(session: Session, suggestion: Suggestion) -> SavedRecipe:
     """Save a card (once: saving it again returns the same saved recipe)."""
     if suggestion.saved_recipe_id is not None:

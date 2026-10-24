@@ -131,14 +131,7 @@ def card_actions_response(request: Request, session: Session, suggestion: Sugges
         return render_partial(request, "partials/card_actions.html", s=suggestion,
                               saved_recipe=saved.saved_for(session, [suggestion]).get(suggestion.saved_recipe_id),
                               in_plan=shopping.in_plan(session, [suggestion]))
-    return redirect(card_page(suggestion))
-
-
-def card_page(suggestion: Suggestion) -> str:
-    """The page a card is shown on: its parent's Saved page, or Cook."""
-    if suggestion.parent_recipe_id:
-        return f"/saved/{suggestion.parent_recipe_id}"
-    return "/"
+    return redirect(saved.card_page(suggestion))
 
 
 @router.post("/suggestions/{suggestion_id}/save")
@@ -165,7 +158,7 @@ def plan_suggestion(suggestion_id: int, request: Request, session: Session = Dep
     shopping.add_to_plan(session, suggestion.recipe_json, suggestion.saved_recipe_id)
     if is_htmx(request):
         return render_partial(request, "partials/plan_button.html", planned=True)
-    return redirect(card_page(suggestion))
+    return redirect(saved.card_page(suggestion))
 
 
 @router.post("/saved/{saved_id}/plan")
